@@ -44,7 +44,7 @@ public class Grid : MonoBehaviour
                 if (i == rows - 1 && Random.value > 0.5f)
                 {
                     cell.Fill();
-                    cell.SetSprite(config.SpriteMaps[Random.Range(0,5)].MappedSprite);
+                    cell.SetSprite(config.SpriteMaps[Random.Range(0, 5)].MappedSprite);
                 }
             }
         }
@@ -84,7 +84,9 @@ public class Grid : MonoBehaviour
             if (IsRowFilled(i))
             {
                 ClearRow(i);
+                MoveDownRowsTogether(i - 1);
                 yield return new WaitForSeconds(0.5f);
+                i++;
             }
         }
     }
@@ -112,7 +114,7 @@ public class Grid : MonoBehaviour
         }
     }
 
-    public void MoveDown(int row)
+    public void MovOneRowDown(int row)
     {
         if (row == 0)
             return;
@@ -120,11 +122,21 @@ public class Grid : MonoBehaviour
         var emptySprite = config.SpriteMaps.First(t => t.MappedId.Equals("outline")).MappedSprite;
         for (int i = 0; i < columns; i++)
         {
-            var aboveGridSprite = grid[row - 1, i].GetSprite;
-            grid[row, i].cellState = grid[row - 1, i].cellState;
-            grid[row, i].SetSprite(aboveGridSprite);
-        }
+            var currentSprite = grid[row, i].GetSprite;
+            var cellState = grid[row, i].cellState;
+            grid[row, i].ClearCell();
+            grid[row, i].SetSprite(emptySprite);
 
-        ClearRow(row - 1);
+            grid[row + 1, i].cellState = cellState;
+            grid[row + 1, i].SetSprite(currentSprite);
+        }
+    }
+
+    public void MoveDownRowsTogether(int startRow)
+    {
+        for (int i = startRow; i >= 0; i--)
+        {
+            MovOneRowDown(i);
+        }
     }
 }
