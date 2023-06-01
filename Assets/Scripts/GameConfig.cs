@@ -11,6 +11,7 @@ public class GameConfig : ScriptableObject
     [SerializeField] private SpriteMapping[] spriteMap;
 
     public BlockConfig[] Blocks => blocks;
+    public SpriteMapping[] SpriteMaps => spriteMap;
     public int GridRows => gridRows;
     public int GridColumns => gridColumns;
 }
@@ -47,5 +48,6 @@ public class SpriteMapping
     [SerializeField] private string id;
     [SerializeField] private Sprite mappedSprite;
 
+    public string MappedId => id;
     public Sprite MappedSprite => mappedSprite;
 }

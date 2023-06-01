@@ -100,6 +100,11 @@ public class Block : MonoBehaviour
         {
             PredictLowestPlacement();
         }
+
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            StartCoroutine(grid.ValidateGrid());
+        }
     }
 
     private int[,] Rotate(int row, int column, int[,] arr)
@@ -181,6 +186,6 @@ public class Block : MonoBehaviour
         }
 
         Debug.Log("Lowest Placement is at Row" + lowestPlacement);
-        grid.DrawBlocksOnGrid(lowestPlacement, startColumnId, arr);
+        grid.DrawBlocksOnGrid(lowestPlacement, startColumnId, arr, _data.BlockSprite);
     }
 }

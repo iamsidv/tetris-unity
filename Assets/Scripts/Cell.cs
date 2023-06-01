@@ -31,4 +31,6 @@ public class Cell : MonoBehaviour
     {
         spriteRenderer.sprite = sprite;
     }
+
+    public Sprite GetSprite => spriteRenderer.sprite;
 }

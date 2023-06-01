@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Grid : MonoBehaviour
@@ -43,18 +44,14 @@ public class Grid : MonoBehaviour
                 if (i == rows - 1 && Random.value > 0.5f)
                 {
                     cell.Fill();
-                    cell.SetSprite(config.Blocks[3].BlockSprite);
+                    cell.SetSprite(config.SpriteMaps[Random.Range(0,5)].MappedSprite);
                 }
             }
         }
     }
 
-
-
-    internal void DrawBlocksOnGrid(int rowPlacement, int column, int[,] arr)
+    public void DrawBlocksOnGrid(int rowPlacement, int column, int[,] arr, Sprite sprite)
     {
-
-
         var rowOffset = rowPlacement - arr.GetLength(0) + 1;
 
         Debug.Log(JsonConvert.SerializeObject(arr) + " rP " + rowPlacement + " offset " + rowOffset + " col " + column);
@@ -63,17 +60,71 @@ public class Grid : MonoBehaviour
         {
             for (int j = 0; j < arr.GetLength(1); j++)
             {
-                //Debug.Log(i + ".." + j);
                 if (arr[i, j] == 0)
                     continue;
 
-                //Debug.Log($"x.> {i + rowOffset}, y.> {j + column}");
-
                 grid[i + rowOffset, j + column].Fill();
-                grid[i + rowOffset, j + column].SetSprite(config.Blocks[3].BlockSprite);
+                grid[i + rowOffset, j + column].SetSprite(sprite);
             }
-
-            //Debug.Log(".................");
         }
+    }
+
+    public IEnumerator ValidateGrid()
+    {
+        //for (int i = 0; i < rows; i++)
+        //{
+        //    if (IsRowFilled(i))
+        //    {
+        //        ClearRow(i);
+        //    }
+        //}
+
+        for (int i = rows - 1; i >= 0; i--)
+        {
+            if (IsRowFilled(i))
+            {
+                ClearRow(i);
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+    }
+
+
+    private bool IsRowFilled(int row)
+    {
+        for (int i = 0; i < columns; i++)
+        {
+            if (grid[row, i].cellState == 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    public void ClearRow(int row)
+    {
+        var emptySprite = config.SpriteMaps.First(t => t.MappedId.Equals("outline")).MappedSprite;
+
+        for (int i = 0; i < columns; i++)
+        {
+            grid[row, i].ClearCell();
+            grid[row, i].SetSprite(emptySprite);
+        }
+    }
+
+    public void MoveDown(int row)
+    {
+        if (row == 0)
+            return;
+
+        var emptySprite = config.SpriteMaps.First(t => t.MappedId.Equals("outline")).MappedSprite;
+        for (int i = 0; i < columns; i++)
+        {
+            var aboveGridSprite = grid[row - 1, i].GetSprite;
+            grid[row, i].cellState = grid[row - 1, i].cellState;
+            grid[row, i].SetSprite(aboveGridSprite);
+        }
+
+        ClearRow(row - 1);
     }
 }
