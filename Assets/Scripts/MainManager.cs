@@ -4,12 +4,7 @@ using UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
-    public enum GameState
-    {
-        Ready,
-        Running,
-        GameOver
-    }
+    
 
     public int currentScore = 0;
 
@@ -41,4 +36,12 @@ public class MainManager : MonoBehaviour
         var menu = MenuManager.ShowMenu<GameplayView>();
         menu.DisplayScore(currentScore);
     }
+}
+
+
+public enum GameState
+{
+    Ready,
+    Running,
+    GameOver
 }

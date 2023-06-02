@@ -238,7 +238,7 @@ MonoBehaviour:
   startColumnId: 3
   lowestRowPlacement: 0
   initRowId: 0
-  moveSpeed: 1.5
+  moveSpeed: 2
 --- !u!4 &88820452
 Transform:
   m_ObjectHideFlags: 0

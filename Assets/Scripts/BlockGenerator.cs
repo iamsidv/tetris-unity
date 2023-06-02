@@ -10,13 +10,14 @@ public class BlockGenerator : MonoBehaviour
     {
         //UserInput.OnDownButtonPressed += DoAfterBlockPlacedInGrid;
         SignalService.OnBlockPlacedEvent += DoAfterBlockPlacedInGrid;
+        SignalService.OnGameStateUpdated += OnGameStateUpdate;
     }
-    
 
-    //private void OnButtonPressed(Signal<ButtonPressedSignal> obj)
-    //{
-    //    throw new System.NotImplementedException();
-    //}
+    private void OnGameStateUpdate(GameState state)
+    {
+        if (state == GameState.Running)
+            CreateNewBlock();
+    }
 
     //private void OnTestSignal(TestSignal obj)
     //{

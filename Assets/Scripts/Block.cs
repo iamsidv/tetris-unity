@@ -33,87 +33,8 @@ public class Block : MonoBehaviour
     public float moveSpeed = 1.5f;
     private float speedFactor = 1f;
 
-    private void OnDirectionChangeEvent(int direction)
-    {
-        if (currentState == States.Move)
-        {
-            startColumnId += direction;
-
-            AdjustBoundPositions();
-        }
-    }
-
-    public void AdjustBoundPositions()
-    {
-        if (startColumnId < 0)
-            startColumnId = 0;
-        else if (startColumnId > grid.columns - arr.GetLength(1))
-            startColumnId = grid.columns - arr.GetLength(1);
-
-        if (currentState != States.Move)
-            transform.position = grid[initRowId, startColumnId].transform.position;
-        else
-        {
-            var currPos = transform.position;
-            currPos.x = grid[initRowId, startColumnId].transform.position.x;
-            transform.position = currPos;
-        }
-
-
-        PredictLowestPlacement();
-
-        currentState = States.Move;
-    }
-
-    private void OnEnable()
-    {
-        UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
-        UserInput.OnRotateEvent += OnRotateEvent;
-        UserInput.OnDownButtonPressed += OnDownButtonPressed; ;
-        SignalService.OnBlockTeleportEvent += SignalService_OnBlockTeleportEvent;
-
-
-        //SignalService.Subscribe<TestSignal>(OnTestSignal);
-    }
-
-    private void SignalService_OnBlockTeleportEvent()
-    {
-        if (currentState != States.Move)
-            return;
-
-        currentState = States.Evaluate;
-        PredictLowestPlacement();
-        StopBlockMovement();
-    }
-
-    private void OnDownButtonPressed(bool isPressed)
-    {
-        speedFactor = isPressed ? config.BlockMoveDownFactor : 1f;
-    }
-
-    private void OnRotateEvent()
-    {
-        if (currentState == States.Move)
-        {
-            arr = Rotate(arr.GetLength(0), arr.GetLength(1), arr);
-            RenderBlock(arr);
-
-            AdjustBoundPositions();
-        }
-    }
-
-    private void OnDisable()
-    {
-        UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
-        UserInput.OnRotateEvent -= OnRotateEvent;
-
-        SignalService.OnBlockTeleportEvent -= SignalService_OnBlockTeleportEvent;
-    }
-
     public void InitialiseBlock(BlockConfig data)
     {
-        //_data = config.Blocks[Random.Range(0, config.Blocks.Length)];
-
         _data = data;
 
         arr = new int[_data.Row, _data.Column];
@@ -140,24 +61,6 @@ public class Block : MonoBehaviour
 
     private void Update()
     {
-        //if (Input.GetKeyDown(KeyCode.UpArrow))
-        //{
-        //    arr = Rotate(arr.GetLength(0), arr.GetLength(1), arr);
-        //    RenderBlock(arr);
-
-        //    AdjustBoundPositions();
-        //}
-
-        //if (Input.GetKeyDown(KeyCode.M))
-        //{
-        //    PredictLowestPlacement();
-        //}
-
-        //if (Input.GetKeyDown(KeyCode.N))
-        //{
-        //    StartCoroutine(grid.ValidateGrid());
-        //}
-
         if (currentState == States.Move)
         {
             var targetPosition = grid[initRowId, startColumnId].transform.position;
@@ -173,6 +76,94 @@ public class Block : MonoBehaviour
                 targetPosition = grid[initRowId, startColumnId].transform.position;
             }
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * moveSpeed * speedFactor);
+        }
+    }
+
+    private void OnEnable()
+    {
+        UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
+        UserInput.OnRotateEvent += OnRotateEvent;
+        UserInput.OnDownButtonPressed += OnDownButtonPressed; ;
+        SignalService.OnBlockTeleportEvent += SignalService_OnBlockTeleportEvent;
+    }
+
+    private void OnDisable()
+    {
+        UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
+        UserInput.OnRotateEvent -= OnRotateEvent;
+
+        SignalService.OnBlockTeleportEvent -= SignalService_OnBlockTeleportEvent;
+    }
+
+    private void OnDirectionChangeEvent(int direction)
+    {
+        if (currentState == States.Move)
+        {
+            var isMoveValid = IsValidMove(direction);
+            if (isMoveValid)
+            {
+                startColumnId += direction;
+                AdjustBoundPositions();
+            }
+        }
+    }
+
+    public void AdjustBoundPositions()
+    {
+        if (startColumnId < 0)
+            startColumnId = 0;
+        else if (startColumnId > grid.columns - arr.GetLength(1))
+            startColumnId = grid.columns - arr.GetLength(1);
+
+        if (currentState != States.Move)
+        {
+            transform.position = grid[initRowId, startColumnId].transform.position;
+        }
+        else
+        {
+            var currPos = transform.position;
+            currPos.x = grid[initRowId, startColumnId].transform.position.x;
+            transform.position = currPos;
+        }
+
+        PredictLowestPlacement();
+        currentState = States.Move;
+    }
+
+    public void Clear()
+    {
+        foreach (var blockItem in renderedBlocks)
+        {
+            Destroy(blockItem.gameObject);
+        }
+        _data = null;
+        arr = null;
+        renderedBlocks = null;
+    }
+
+    private void SignalService_OnBlockTeleportEvent()
+    {
+        if (currentState != States.Move)
+            return;
+
+        currentState = States.Evaluate;
+        PredictLowestPlacement();
+        StopBlockMovement();
+    }
+
+    private void OnDownButtonPressed(bool isPressed)
+    {
+        speedFactor = isPressed ? config.BlockMoveDownFactor : 1f;
+    }
+
+    private void OnRotateEvent()
+    {
+        if (currentState == States.Move)
+        {
+            arr = Rotate(arr.GetLength(0), arr.GetLength(1), arr);
+            RenderBlock(arr);
+
+            AdjustBoundPositions();
         }
     }
 
@@ -211,34 +202,6 @@ public class Block : MonoBehaviour
         return newArr;
     }
 
-    private void RenderBlock(int[,] arr)
-    {
-        if (renderedBlocks == null || renderedBlocks.Length == 0)
-        {
-            renderedBlocks = new SpriteRenderer[arr.GetLength(0) * arr.GetLength(1)];
-
-            for (int i = 0; i < renderedBlocks.Length; i++)
-            {
-                var go = Instantiate(blockElement, Vector3.zero, Quaternion.identity, this.transform);
-                go.gameObject.SetActive(false);
-                go.transform.localScale = Vector3.one * 0.9f;
-                renderedBlocks[i] = go;
-            }
-
-        }
-
-        for (int i = 0; i < arr.GetLength(0); i++)
-        {
-            for (int j = 0; j < arr.GetLength(1); j++)
-            {
-                var go = renderedBlocks[i + (j * arr.GetLength(0))];
-                go.transform.localPosition = new Vector3(j, -i, 0) + Vector3.up * (arr.GetLength(0) - 1);
-                go.gameObject.SetActive(arr[i, j] > 0);
-                go.sprite = _data.BlockSprite;
-            }
-        }
-    }
-
     private void PredictLowestPlacement()
     {
         lowestRowPlacement = config.GridRows - 1;
@@ -274,23 +237,64 @@ public class Block : MonoBehaviour
         //grid.DrawBlocksOnGrid(lowestPlacement, startColumnId, arr, _data.BlockSprite);
     }
 
-    public void DrawBlocksOnGrid()
+    private void RenderBlock(int[,] arr)
+    {
+        if (renderedBlocks == null || renderedBlocks.Length == 0)
+        {
+            renderedBlocks = new SpriteRenderer[arr.GetLength(0) * arr.GetLength(1)];
+
+            for (int i = 0; i < renderedBlocks.Length; i++)
+            {
+                var go = Instantiate(blockElement, Vector3.zero, Quaternion.identity, this.transform);
+                go.gameObject.SetActive(false);
+                go.transform.localScale = Vector3.one * 0.9f;
+                renderedBlocks[i] = go;
+            }
+        }
+
+        for (int i = 0; i < arr.GetLength(0); i++)
+        {
+            for (int j = 0; j < arr.GetLength(1); j++)
+            {
+                var go = renderedBlocks[i + (j * arr.GetLength(0))];
+                go.transform.localPosition = new Vector3(j, -i, 0) + Vector3.up * (arr.GetLength(0) - 1);
+                go.gameObject.SetActive(arr[i, j] > 0);
+                go.sprite = _data.BlockSprite;
+            }
+        }
+    }
+
+    private void DrawBlocksOnGrid()
     {
         grid.DrawBlocksOnGrid(lowestRowPlacement, startColumnId, arr, _data.BlockSprite);
     }
 
-    public void Clear()
+    private bool IsValidMove(int direction)
     {
-        foreach (var blockItem in renderedBlocks)
-        {
-            Destroy(blockItem.gameObject);
-        }
-        _data = null;
-        arr = null;
-        renderedBlocks = null;
+        var newColumn = startColumnId + direction;
+
+        var totalColumns = arr.GetLength(1);
+        var isValid = true;
+
+        var firstColumnItem = newColumn;
+        var lastColumnItem = newColumn + totalColumns - 1;
+
+        if (newColumn < 0)
+            return false;
+
+        if (lastColumnItem >= grid.columns)
+            return false;
+
+        if (grid[initRowId, firstColumnItem].cellState != 0)
+            return false;
+
+        if (grid[initRowId, lastColumnItem].cellState != 0)
+            return false;
+
+        return isValid;
     }
 
-    public void SetBlocksVisibility(bool state)
+    private void SetBlocksVisibility(bool state)
     {
         foreach (var blockItem in renderedBlocks)
         {

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 
 public class SignalService
 {
+   
+
     public static event Action<int> OnScoreUpdated;
-    public static event Action<int> OnGameStateUpdate;
     public static event Action OnBlockPlacedEvent;
     public static event Action OnBlockTeleportEvent;
+    public static event Action<GameState> OnGameStateUpdated;
 
     public static void TriggerOnBlockPlacedEvent()
     {
@@ -16,6 +18,11 @@ public class SignalService
     public static void TeleportCurrentBlock()
     {
         OnBlockTeleportEvent?.Invoke();
+    }
+
+    public static void UpdateGameState(GameState state)
+    {
+        OnGameStateUpdated?.Invoke(state);
     }
 
     //    public Dictionary<System.Type, List<System.Action<ISignal>>> receivers = new Dictionary<System.Type, List<System.Action<ISignal>>>();
