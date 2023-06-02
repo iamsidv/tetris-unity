@@ -9,11 +9,13 @@ public class GameConfig : ScriptableObject
     [SerializeField] private int gridColumns;
     [SerializeField] private BlockConfig[] blocks;
     [SerializeField] private SpriteMapping[] spriteMap;
+    [SerializeField] private float blockMoveDownSpeed;
 
     public BlockConfig[] Blocks => blocks;
     public SpriteMapping[] SpriteMaps => spriteMap;
     public int GridRows => gridRows;
     public int GridColumns => gridColumns;
+    public float BlockMoveDownFactor => blockMoveDownSpeed;
 }
 
 [System.Serializable]

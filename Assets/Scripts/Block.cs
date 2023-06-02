@@ -5,6 +5,16 @@ using UnityEngine;
 
 public class Block : MonoBehaviour
 {
+    enum States
+    {
+        Init,
+        Ready,
+        Move,
+        Placed,
+        Evaluate
+    }
+
+
     [SerializeField] private SpriteRenderer blockElement;
     [SerializeField] private SpriteRenderer[] renderedBlocks;
 
@@ -16,12 +26,21 @@ public class Block : MonoBehaviour
     private BlockConfig _data;
 
     public int startColumnId;
+    public int lowestRowPlacement;
+
+    public int initRowId;
+    private States currentState;
+    public float moveSpeed = 1.5f;
+    private float speedFactor = 1f;
 
     private void OnDirectionChangeEvent(int direction)
     {
-        startColumnId += direction;
+        if (currentState == States.Move)
+        {
+            startColumnId += direction;
 
-        AdjustBoundPositions();
+            AdjustBoundPositions();
+        }
     }
 
     public void AdjustBoundPositions()
@@ -31,34 +50,64 @@ public class Block : MonoBehaviour
         else if (startColumnId > grid.columns - arr.GetLength(1))
             startColumnId = grid.columns - arr.GetLength(1);
 
-        transform.position = grid[0, startColumnId].transform.position;
-    }
+        if (currentState != States.Move)
+            transform.position = grid[initRowId, startColumnId].transform.position;
+        else
+        {
+            var currPos = transform.position;
+            currPos.x = grid[initRowId, startColumnId].transform.position.x;
+            transform.position = currPos;
+        }
 
-    void Start()
-    {
 
+        PredictLowestPlacement();
 
-        //transform.position = grid[config.GridRows - 1, startColumnId].transform.position;
+        currentState = States.Move;
     }
 
     private void OnEnable()
     {
         UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
         UserInput.OnRotateEvent += OnRotateEvent;
+        UserInput.OnDownButtonPressed += OnDownButtonPressed; ;
+        SignalService.OnBlockTeleportEvent += SignalService_OnBlockTeleportEvent;
+
+
+        //SignalService.Subscribe<TestSignal>(OnTestSignal);
+    }
+
+    private void SignalService_OnBlockTeleportEvent()
+    {
+        if (currentState != States.Move)
+            return;
+
+        currentState = States.Evaluate;
+        PredictLowestPlacement();
+        StopBlockMovement();
+    }
+
+    private void OnDownButtonPressed(bool isPressed)
+    {
+        speedFactor = isPressed ? config.BlockMoveDownFactor : 1f;
     }
 
     private void OnRotateEvent()
     {
-        arr = Rotate(arr.GetLength(0), arr.GetLength(1), arr);
-        RenderBlock(arr);
+        if (currentState == States.Move)
+        {
+            arr = Rotate(arr.GetLength(0), arr.GetLength(1), arr);
+            RenderBlock(arr);
 
-        AdjustBoundPositions();
+            AdjustBoundPositions();
+        }
     }
 
     private void OnDisable()
     {
         UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
         UserInput.OnRotateEvent -= OnRotateEvent;
+
+        SignalService.OnBlockTeleportEvent -= SignalService_OnBlockTeleportEvent;
     }
 
     public void InitialiseBlock(BlockConfig data)
@@ -78,6 +127,9 @@ public class Block : MonoBehaviour
             }
         }
 
+        initRowId = 0;
+        currentState = States.Init;
+
         Debug.Log(JsonConvert.SerializeObject(arr));
     }
 
@@ -96,15 +148,48 @@ public class Block : MonoBehaviour
         //    AdjustBoundPositions();
         //}
 
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            PredictLowestPlacement();
-        }
+        //if (Input.GetKeyDown(KeyCode.M))
+        //{
+        //    PredictLowestPlacement();
+        //}
 
-        if (Input.GetKeyDown(KeyCode.N))
+        //if (Input.GetKeyDown(KeyCode.N))
+        //{
+        //    StartCoroutine(grid.ValidateGrid());
+        //}
+
+        if (currentState == States.Move)
         {
-            StartCoroutine(grid.ValidateGrid());
+            var targetPosition = grid[initRowId, startColumnId].transform.position;
+
+            if (Vector3.SqrMagnitude(targetPosition - transform.position) < 0.01f)
+            {
+                initRowId += 1;
+
+                if (initRowId > lowestRowPlacement)
+                {
+                    StopBlockMovement();
+                }
+                targetPosition = grid[initRowId, startColumnId].transform.position;
+            }
+            transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * moveSpeed * speedFactor);
         }
+    }
+
+    private void StopBlockMovement()
+    {
+        currentState = States.Placed;
+        initRowId = lowestRowPlacement;
+        //transform.position = grid[initRowId, startColumnId].transform.position;
+
+        DrawBlocksOnGrid();
+
+        SetBlocksVisibility(false);
+
+        StartCoroutine(grid.ValidateGrid(() =>
+        {
+            SignalService.TriggerOnBlockPlacedEvent();
+        }));
     }
 
     private int[,] Rotate(int row, int column, int[,] arr)
@@ -156,12 +241,12 @@ public class Block : MonoBehaviour
 
     private void PredictLowestPlacement()
     {
-        var lowestPlacement = config.GridRows - 1;
+        lowestRowPlacement = config.GridRows - 1;
         for (int i = 0; i < arr.GetLength(1); i++)
         {
             var lastRow = arr.GetLength(0) - 1;
             var emptyCellInColumn = 0;
-            for (int e = lastRow; e >=0 ; e--)
+            for (int e = lastRow; e >= 0; e--)
             {
                 if (arr[e, i] != 0)
                     break;
@@ -170,7 +255,7 @@ public class Block : MonoBehaviour
 
             var blockColumnId = i + startColumnId;
             var highestPlacement = 0;
-            for (int j = 1; j < config.GridRows; j++)
+            for (int j = initRowId; j < config.GridRows; j++)
             {
                 if (grid[j, blockColumnId].cellState != 0)
                 {
@@ -181,11 +266,35 @@ public class Block : MonoBehaviour
 
             Debug.Log(highestPlacement + " Empty cell " + emptyCellInColumn);
 
-            if (highestPlacement < lowestPlacement)
-                lowestPlacement = highestPlacement;
+            if (highestPlacement < lowestRowPlacement)
+                lowestRowPlacement = highestPlacement;
         }
 
-        Debug.Log("Lowest Placement is at Row" + lowestPlacement);
-        grid.DrawBlocksOnGrid(lowestPlacement, startColumnId, arr, _data.BlockSprite);
+        Debug.Log("Lowest Placement is at Row" + lowestRowPlacement);
+        //grid.DrawBlocksOnGrid(lowestPlacement, startColumnId, arr, _data.BlockSprite);
+    }
+
+    public void DrawBlocksOnGrid()
+    {
+        grid.DrawBlocksOnGrid(lowestRowPlacement, startColumnId, arr, _data.BlockSprite);
+    }
+
+    public void Clear()
+    {
+        foreach (var blockItem in renderedBlocks)
+        {
+            Destroy(blockItem.gameObject);
+        }
+        _data = null;
+        arr = null;
+        renderedBlocks = null;
+    }
+
+    public void SetBlocksVisibility(bool state)
+    {
+        foreach (var blockItem in renderedBlocks)
+        {
+            blockItem.gameObject.SetActive(state);
+        }
     }
 }

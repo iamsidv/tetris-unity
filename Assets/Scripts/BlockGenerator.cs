@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BlockGenerator : MonoBehaviour
@@ -9,25 +8,54 @@ public class BlockGenerator : MonoBehaviour
 
     private void OnEnable()
     {
-        UserInput.OnMoveDownEvent += DoGenerateNewBlock;
+        //UserInput.OnDownButtonPressed += DoAfterBlockPlacedInGrid;
+        SignalService.OnBlockPlacedEvent += DoAfterBlockPlacedInGrid;
     }
+    
+
+    //private void OnButtonPressed(Signal<ButtonPressedSignal> obj)
+    //{
+    //    throw new System.NotImplementedException();
+    //}
+
+    //private void OnTestSignal(TestSignal obj)
+    //{
+    //    Debug.Log($"_signalTest_ {obj.GetType().Name} received by {this.GetType().Name} with value {obj.Value}");
+    //}
+
+    //private void OnButtonPressed(ButtonPressedSignal obj)
+    //{
+    //    Debug.Log($"_signalTest_ {obj.GetType().Name} received by {this.GetType().Name} with value {obj.Value}");
+    //}
 
     private void OnDisable()
     {
-        UserInput.OnMoveDownEvent -= DoGenerateNewBlock;
+        //UserInput.OnDownButtonPressed -= DoAfterBlockPlacedInGrid;
+
+        SignalService.OnBlockPlacedEvent -= DoAfterBlockPlacedInGrid;
+    }
+
+    private void DoAfterBlockPlacedInGrid()
+    {
+        ClearOldBlock();
+        CreateNewBlock();
     }
 
     private void Start()
     {
-        DoGenerateNewBlock();
+        CreateNewBlock();
     }
 
-    private void DoGenerateNewBlock()
+    private void CreateNewBlock()
     {
         var blockData = config.Blocks[Random.Range(0, config.Blocks.Length)];
-        //var blockData = config.Blocks[4];
         block.InitialiseBlock(blockData);
         block.RenderBlock();
         block.AdjustBoundPositions();
+    }
+
+    private void ClearOldBlock()
+    {
+        block.Clear();
     }
 }

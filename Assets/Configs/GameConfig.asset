@@ -53,3 +53,4 @@ MonoBehaviour:
     mappedSprite: {fileID: 21300000, guid: de8b985162e0146348ab6f1af949f1f5, type: 3}
   - id: outline
     mappedSprite: {fileID: 21300000, guid: 0847a3427de03cc41bf6afad1b314a42, type: 3}
+  blockMoveDownSpeed: 3.5

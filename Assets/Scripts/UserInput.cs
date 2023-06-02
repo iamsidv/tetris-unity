@@ -8,7 +8,7 @@ public class UserInput : MonoBehaviour
 {
     public static event Action<int> OnDirectionChangeEvent;
     public static event Action OnRotateEvent;
-    public static event Action OnMoveDownEvent;
+    public static event Action<bool> OnDownButtonPressed;
 
     // Update is called once per frame
     private void Update()
@@ -23,19 +23,30 @@ public class UserInput : MonoBehaviour
             OnDirectionChangeEvent?.Invoke(-1);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            OnMoveDownEvent?.Invoke();
+            OnDownButtonPressed?.Invoke(true);
+        }
+
+        if (Input.GetKeyUp(KeyCode.DownArrow))
+        {
+            OnDownButtonPressed?.Invoke(false);
         }
 
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
+            //SignalService.Publish<TestSignal>(new TestSignal { Value = 1 });
             OnRotateEvent?.Invoke();
         }
 
-        if (Input.GetKeyDown(KeyCode.DownArrow))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-
+            SignalService.TeleportCurrentBlock();
         }
+
+        //if (Input.GetKeyDown(KeyCode.Q))
+        //{
+        //    SignalService.Publish<ButtonPressedSignal>(new ButtonPressedSignal { Value = 100 });
+        //}
     }
 }

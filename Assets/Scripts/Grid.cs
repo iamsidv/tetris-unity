@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,10 +42,10 @@ public class Grid : MonoBehaviour
                 grid[i, j] = cell;
 
                 //Test Code
-                if (i == rows - 1 && Random.value > 0.5f)
+                if (i == rows - 1 && UnityEngine.Random.value > 0.5f)
                 {
                     cell.Fill();
-                    cell.SetSprite(config.SpriteMaps[Random.Range(0, 5)].MappedSprite);
+                    cell.SetSprite(config.SpriteMaps[UnityEngine.Random.Range(0, 5)].MappedSprite);
                 }
             }
         }
@@ -69,7 +70,7 @@ public class Grid : MonoBehaviour
         }
     }
 
-    public IEnumerator ValidateGrid()
+    public IEnumerator ValidateGrid(Action callback = null)
     {
         //for (int i = 0; i < rows; i++)
         //{
@@ -89,6 +90,10 @@ public class Grid : MonoBehaviour
                 i++;
             }
         }
+
+        yield return null;
+
+        callback?.Invoke();
     }
 
 
