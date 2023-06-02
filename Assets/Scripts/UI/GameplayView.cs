@@ -6,6 +6,7 @@ using UnityEngine;
 public class GameplayView : BaseView
 {
     [SerializeField] private UnityEngine.UI.Text scoreLabel;
+    [SerializeField] private UnityEngine.UI.Text titleLabel;
 
     public override void OnScreenEnter()
     {
@@ -23,5 +24,10 @@ public class GameplayView : BaseView
     internal void DisplayScore(int currentScore)
     {
         scoreLabel.text = $"Score :{currentScore}";
+    }
+
+    public void SetTitle(string title)
+    {
+        titleLabel.text = title;
     }
 }

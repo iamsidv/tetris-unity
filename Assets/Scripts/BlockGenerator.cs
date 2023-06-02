@@ -13,10 +13,25 @@ public class BlockGenerator : MonoBehaviour
         SignalService.OnGameStateUpdated += OnGameStateUpdate;
     }
 
+    private void OnDisable()
+    {
+        //UserInput.OnDownButtonPressed -= DoAfterBlockPlacedInGrid;
+
+        SignalService.OnBlockPlacedEvent -= DoAfterBlockPlacedInGrid;
+        SignalService.OnGameStateUpdated -= OnGameStateUpdate;
+    }
+
     private void OnGameStateUpdate(GameState state)
     {
         if (state == GameState.Running)
+        {
+            ClearOldBlock();
             CreateNewBlock();
+        //}
+        //else if (state == GameState.Ready)
+        //{
+            
+        }
     }
 
     //private void OnTestSignal(TestSignal obj)
@@ -29,21 +44,17 @@ public class BlockGenerator : MonoBehaviour
     //    Debug.Log($"_signalTest_ {obj.GetType().Name} received by {this.GetType().Name} with value {obj.Value}");
     //}
 
-    private void OnDisable()
-    {
-        //UserInput.OnDownButtonPressed -= DoAfterBlockPlacedInGrid;
 
-        SignalService.OnBlockPlacedEvent -= DoAfterBlockPlacedInGrid;
-    }
 
     private void DoAfterBlockPlacedInGrid()
     {
-        ClearOldBlock();
-        CreateNewBlock();
-    }
+        if (MainManager.CurrentGameState == GameState.GameOver)
+        {
+            MainManager.instance.ShowGameOverScreen();
+            return;
+        }
 
-    private void Start()
-    {
+        ClearOldBlock();
         CreateNewBlock();
     }
 

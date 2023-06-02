@@ -4,16 +4,28 @@ using UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
-    
+    public static MainManager instance;
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+    }
 
     public int currentScore = 0;
 
-    public GameState CurrentGameState { get; private set; }
+    [SerializeField] private GameState gameState;
+    [SerializeField] private float newGameStartDelay = 2f;
+
+    public static GameState CurrentGameState { get; private set; }
 
     public void SetGameState(GameState state)
     {
         CurrentGameState = state;
-        //SignalService.OnGameStateUpdated
+        gameState = state;
+        SignalService.TriggerUpdateGameState(state);
     }
 
     private void Start()
@@ -21,20 +33,38 @@ public class MainManager : MonoBehaviour
         SetGameReadyState();
     }
 
-    private void SetGameReadyState()
+    private static void SetGameReadyState()
     {
-        SetGameState(GameState.Ready);
+        instance.SetGameState(GameState.Ready);
         MenuManager.ShowMenu<MainMenuView>();
         MenuManager.HideMenu<GameplayView>();
     }
 
-    private void StartGame()
+    public void StartGame()
     {
-        SetGameState(GameState.Running);
         currentScore = 0;
         MenuManager.HideMenu<MainMenuView>();
         var menu = MenuManager.ShowMenu<GameplayView>();
         menu.DisplayScore(currentScore);
+        menu.SetTitle(string.Empty);
+        SetGameState(GameState.Running);
+    }
+
+    public void ShowGameOverScreen()
+    {
+        MenuManager.HideMenu<MainMenuView>();
+        var menu = MenuManager.ShowMenu<GameplayView>();
+        menu.DisplayScore(currentScore);
+        menu.SetTitle("Gameover");
+
+        StartCoroutine(DelayedCall(newGameStartDelay));
+    }
+
+    private IEnumerator DelayedCall(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        SetGameReadyState();
     }
 }
 

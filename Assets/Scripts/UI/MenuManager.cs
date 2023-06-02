@@ -16,7 +16,6 @@ public class MenuManager : MonoBehaviour
         }
     }
 
-
     public static T ShowMenu<T>() where T : BaseView
     {
         var type = typeof(T);

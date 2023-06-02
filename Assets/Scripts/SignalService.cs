@@ -7,7 +7,7 @@ public class SignalService
 
     public static event Action<int> OnScoreUpdated;
     public static event Action OnBlockPlacedEvent;
-    public static event Action OnBlockTeleportEvent;
+    public static event Action OnSpaceBarPressedEvent;
     public static event Action<GameState> OnGameStateUpdated;
 
     public static void TriggerOnBlockPlacedEvent()
@@ -15,12 +15,12 @@ public class SignalService
         OnBlockPlacedEvent?.Invoke();
     }
 
-    public static void TeleportCurrentBlock()
+    public static void TriggerSpaceBarPressedEvent()
     {
-        OnBlockTeleportEvent?.Invoke();
+        OnSpaceBarPressedEvent?.Invoke();
     }
 
-    public static void UpdateGameState(GameState state)
+    public static void TriggerUpdateGameState(GameState state)
     {
         OnGameStateUpdated?.Invoke(state);
     }

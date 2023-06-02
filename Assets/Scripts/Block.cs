@@ -61,6 +61,9 @@ public class Block : MonoBehaviour
 
     private void Update()
     {
+        if (MainManager.CurrentGameState != GameState.Running)
+            return;
+
         if (currentState == States.Move)
         {
             var targetPosition = grid[initRowId, startColumnId].transform.position;
@@ -84,7 +87,7 @@ public class Block : MonoBehaviour
         UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
         UserInput.OnRotateEvent += OnRotateEvent;
         UserInput.OnDownButtonPressed += OnDownButtonPressed; ;
-        SignalService.OnBlockTeleportEvent += SignalService_OnBlockTeleportEvent;
+        SignalService.OnSpaceBarPressedEvent += OnBlockTeleportEvent;
     }
 
     private void OnDisable()
@@ -92,7 +95,7 @@ public class Block : MonoBehaviour
         UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
         UserInput.OnRotateEvent -= OnRotateEvent;
 
-        SignalService.OnBlockTeleportEvent -= SignalService_OnBlockTeleportEvent;
+        SignalService.OnSpaceBarPressedEvent -= OnBlockTeleportEvent;
     }
 
     private void OnDirectionChangeEvent(int direction)
@@ -141,8 +144,11 @@ public class Block : MonoBehaviour
         renderedBlocks = null;
     }
 
-    private void SignalService_OnBlockTeleportEvent()
+    private void OnBlockTeleportEvent()
     {
+        if (MainManager.CurrentGameState != GameState.Running)
+            return;
+
         if (currentState != States.Move)
             return;
 
@@ -266,6 +272,12 @@ public class Block : MonoBehaviour
 
     private void DrawBlocksOnGrid()
     {
+        if(lowestRowPlacement == 0)
+        {
+            MainManager.instance.SetGameState(GameState.GameOver);
+            return;
+        }
+
         grid.DrawBlocksOnGrid(lowestRowPlacement, startColumnId, arr, _data.BlockSprite);
     }
 
@@ -296,6 +308,9 @@ public class Block : MonoBehaviour
 
     private void SetBlocksVisibility(bool state)
     {
+        if (lowestRowPlacement == 0)
+            return;
+
         foreach (var blockItem in renderedBlocks)
         {
             blockItem.gameObject.SetActive(state);

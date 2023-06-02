@@ -41,7 +41,7 @@ public class UserInput : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            SignalService.TeleportCurrentBlock();
+            SignalService.TriggerSpaceBarPressedEvent();
         }
 
         //if (Input.GetKeyDown(KeyCode.Q))

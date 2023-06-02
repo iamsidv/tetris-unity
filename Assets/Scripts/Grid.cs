@@ -15,18 +15,28 @@ public class Grid : MonoBehaviour
     [SerializeField] private GameConfig config;
     [SerializeField] Cell cellPrefab;
 
-    public Cell this[int row, int column]
-    {
-        get
-        {
-            return grid[row, column];
-        }
-    }
+    public Cell this[int row, int column] => grid[row, column];
 
     private void Awake()
     {
         grid = new Cell[rows, columns];
         PopulateGrid();
+    }
+
+    private void OnEnable()
+    {
+        SignalService.OnGameStateUpdated += OnGameStateUpdate;
+    }
+
+    private void OnGameStateUpdate(GameState state)
+    {
+        if (state == GameState.Running)
+            ClearAllCells();
+    }
+
+    private void OnDisable()
+    {
+        SignalService.OnGameStateUpdated -= OnGameStateUpdate;
     }
 
     private void PopulateGrid()
@@ -142,6 +152,14 @@ public class Grid : MonoBehaviour
         for (int i = startRow; i >= 0; i--)
         {
             MovOneRowDown(i);
+        }
+    }
+
+    public void ClearAllCells()
+    {
+        for (int i = 0; i < rows; i++)
+        {
+            ClearRow(i);
         }
     }
 }
