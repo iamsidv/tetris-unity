@@ -21,7 +21,7 @@ public class Block : MonoBehaviour
     private int[,] arr;
 
     public GameConfig config;
-    public Grid grid;
+    public GameGrid grid;
 
     private BlockConfig _data;
 
@@ -32,6 +32,8 @@ public class Block : MonoBehaviour
     private States currentState;
     public float moveSpeed = 1.5f;
     private float speedFactor = 1f;
+
+    private bool isDownKeyPressed;
 
     public void InitialiseBlock(BlockConfig data)
     {
@@ -79,6 +81,11 @@ public class Block : MonoBehaviour
                 targetPosition = grid[initRowId, startColumnId].transform.position;
             }
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * moveSpeed * speedFactor);
+
+            if (isDownKeyPressed)
+            {
+                MainManager.instance.AddScore(1);
+            }
         }
     }
 
@@ -155,10 +162,13 @@ public class Block : MonoBehaviour
         currentState = States.Evaluate;
         PredictLowestPlacement();
         StopBlockMovement();
+
+        MainManager.instance.AddScore((grid.rows - lowestRowPlacement) * 35);
     }
 
     private void OnDownButtonPressed(bool isPressed)
     {
+        isDownKeyPressed = isPressed;
         speedFactor = isPressed ? config.BlockMoveDownFactor : 1f;
     }
 

@@ -10,12 +10,17 @@ public class GameConfig : ScriptableObject
     [SerializeField] private BlockConfig[] blocks;
     [SerializeField] private SpriteMapping[] spriteMap;
     [SerializeField] private float blockMoveDownSpeed;
+    [SerializeField] private int lineClearMultiplier;
+    [SerializeField] private int lineClearScore;
 
     public BlockConfig[] Blocks => blocks;
     public SpriteMapping[] SpriteMaps => spriteMap;
     public int GridRows => gridRows;
     public int GridColumns => gridColumns;
     public float BlockMoveDownFactor => blockMoveDownSpeed;
+
+    public int LineClearScore => lineClearScore;
+    public int LineClearMultiplier => lineClearMultiplier;
 }
 
 [System.Serializable]

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Grid : MonoBehaviour
+public class GameGrid : MonoBehaviour
 {
     public int rows = 12;
     public int columns = 8;
@@ -82,13 +82,17 @@ public class Grid : MonoBehaviour
 
     public IEnumerator ValidateGrid(Action callback = null)
     {
-        //for (int i = 0; i < rows; i++)
-        //{
-        //    if (IsRowFilled(i))
-        //    {
-        //        ClearRow(i);
-        //    }
-        //}
+        var linesFilled = 0;
+        for (int i = 0; i < rows; i++)
+        {
+            if (IsRowFilled(i))
+            {
+                linesFilled += 1;
+            }
+        }
+
+        if (linesFilled > 0)
+            MainManager.instance.AddScore(config.LineClearScore + (linesFilled - 1) * config.LineClearMultiplier);
 
         for (int i = rows - 1; i >= 0; i--)
         {

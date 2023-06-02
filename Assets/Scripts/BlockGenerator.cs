@@ -27,10 +27,6 @@ public class BlockGenerator : MonoBehaviour
         {
             ClearOldBlock();
             CreateNewBlock();
-        //}
-        //else if (state == GameState.Ready)
-        //{
-            
         }
     }
 

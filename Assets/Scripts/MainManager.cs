@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -65,6 +66,12 @@ public class MainManager : MonoBehaviour
         yield return new WaitForSeconds(delay);
 
         SetGameReadyState();
+    }
+
+    public void AddScore(int score)
+    {
+        currentScore += score;
+        SignalService.TriggerUpdateScore(currentScore);
     }
 }
 

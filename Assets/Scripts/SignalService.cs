@@ -25,6 +25,11 @@ public class SignalService
         OnGameStateUpdated?.Invoke(state);
     }
 
+    public static void TriggerUpdateScore(int updatedScore)
+    {
+        OnScoreUpdated?.Invoke(updatedScore);
+    }
+
     //    public Dictionary<System.Type, List<System.Action<ISignal>>> receivers = new Dictionary<System.Type, List<System.Action<ISignal>>>();
     //    public Dictionary<System.Type, List<object>> observers = new Dictionary<System.Type, List<object>>();
 
