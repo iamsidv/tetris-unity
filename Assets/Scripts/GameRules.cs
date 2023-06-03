@@ -101,7 +101,7 @@ public class GameRules
                     continue;
 
                 if (currentColumn + j >= config.GridColumns)
-                    return false;
+                    return true;
 
                 if (grid[currentRow + i, currentColumn + j].cellState != 0)
                     return false;
