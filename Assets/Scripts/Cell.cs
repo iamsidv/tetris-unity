@@ -3,13 +3,14 @@ using UnityEngine;
 
 public class Cell : MonoBehaviour
 {
-    public int rowId;
-    public int columnId;
+    private int rowId;
+    private int columnId;
 
     public int cellState = 0;
     //public int cellColor = 0;
 
     [SerializeField] private SpriteRenderer spriteRenderer;
+    public Sprite GetSprite => spriteRenderer.sprite;
 
     public void Init(int row, int column)
     {
@@ -31,6 +32,4 @@ public class Cell : MonoBehaviour
     {
         spriteRenderer.sprite = sprite;
     }
-
-    public Sprite GetSprite => spriteRenderer.sprite;
 }

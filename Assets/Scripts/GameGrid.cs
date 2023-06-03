@@ -6,20 +6,19 @@ using UnityEngine;
 
 public class GameGrid : MonoBehaviour
 {
-    public int rows = 12;
-    public int columns = 8;
-
-    private Cell[,] grid;
-
+    [SerializeField] private int rows = 12;
+    [SerializeField] private int columns = 8;
     [SerializeField] private GameConfig config;
     [SerializeField] private Cell cellPrefab;
 
     public Cell this[int row, int column] => grid[row, column];
 
+    private Cell[,] grid;
+
     private void Awake()
     {
         grid = new Cell[rows, columns];
-        PopulateGrid();
+        Initialize();
     }
 
     private void OnEnable()
@@ -38,7 +37,7 @@ public class GameGrid : MonoBehaviour
         SignalService.OnGameStateUpdated -= OnGameStateUpdate;
     }
 
-    private void PopulateGrid()
+    private void Initialize()
     {
         for (int i = 0; i < rows; i++)
         {
@@ -62,8 +61,6 @@ public class GameGrid : MonoBehaviour
 
     public void DrawBlocksOnGrid(int rowOffset, int column, int[,] arr, Sprite sprite)
     {
-        //var rowOffset = rowPlacement - arr.GetLength(0) + 1;
-
         Debug.Log(JsonConvert.SerializeObject(arr) + " offset " + rowOffset + " col " + column);
 
         for (int i = 0; i < arr.GetLength(0); i++)
@@ -91,7 +88,7 @@ public class GameGrid : MonoBehaviour
         }
 
         if (linesFilled > 0)
-            MainManager.instance.AddScore(config.LineClearScore + (linesFilled - 1) * config.LineClearMultiplier);
+            MainManager.Instance.AddScore(config.LineClearScore + (linesFilled - 1) * config.LineClearMultiplier);
 
         for (int i = rows - 1; i >= 0; i--)
         {
@@ -110,16 +107,7 @@ public class GameGrid : MonoBehaviour
         callback?.Invoke();
     }
 
-    private bool IsRowFilled(int row)
-    {
-        for (int i = 0; i < columns; i++)
-        {
-            if (grid[row, i].cellState == 0)
-                return false;
-        }
-
-        return true;
-    }
+    
 
     public void ClearRow(int row)
     {
@@ -164,5 +152,16 @@ public class GameGrid : MonoBehaviour
         {
             ClearRow(i);
         }
+    }
+
+    private bool IsRowFilled(int row)
+    {
+        for (int i = 0; i < columns; i++)
+        {
+            if (grid[row, i].cellState == 0)
+                return false;
+        }
+
+        return true;
     }
 }

@@ -1,24 +1,35 @@
 using System.Collections;
 using UnityEngine;
 
+public enum GameState
+{
+    Ready,
+    Running,
+    GameOver
+}
+
 public class MainManager : MonoBehaviour
 {
-    public static MainManager instance;
-
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-        }
-    }
-
-    public int currentScore = 0;
+    public static MainManager Instance { get; private set; }
+    public static GameState CurrentGameState { get; private set; }
 
     [SerializeField] private GameState gameState;
     [SerializeField] private float newGameStartDelay = 2f;
 
-    public static GameState CurrentGameState { get; private set; }
+    private int currentScore = 0;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+    }
+
+    private void Start()
+    {
+        SetGameReadyState();
+    }
 
     public void SetGameState(GameState state)
     {
@@ -27,14 +38,9 @@ public class MainManager : MonoBehaviour
         SignalService.TriggerUpdateGameState(state);
     }
 
-    private void Start()
-    {
-        SetGameReadyState();
-    }
-
     private static void SetGameReadyState()
     {
-        instance.SetGameState(GameState.Ready);
+        Instance.SetGameState(GameState.Ready);
         MenuManager.ShowMenu<MainMenuView>();
         MenuManager.HideMenu<GameplayView>();
     }
@@ -71,11 +77,4 @@ public class MainManager : MonoBehaviour
         currentScore += score;
         SignalService.TriggerUpdateScore(currentScore);
     }
-}
-
-public enum GameState
-{
-    Ready,
-    Running,
-    GameOver
 }

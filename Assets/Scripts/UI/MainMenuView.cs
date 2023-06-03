@@ -10,7 +10,7 @@ public class MainMenuView : BaseView
     private void OnSpaceBarPressedEvent()
     {
         if (MainManager.CurrentGameState == GameState.Ready)
-            MainManager.instance.StartGame();
+            MainManager.Instance.StartGame();
     }
 
     public override void OnScreenExit()

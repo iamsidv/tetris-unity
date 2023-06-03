@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Block : MonoBehaviour
 {
-    private enum States
+    private enum BlockState
     {
         Init,
         Ready,
@@ -14,33 +14,69 @@ public class Block : MonoBehaviour
 
     [SerializeField] private SpriteRenderer blockElement;
     [SerializeField] private SpriteRenderer[] renderedBlocks;
-
-    private int[,] block;
-
-    public GameConfig gameConfig;
-    public GameGrid gameGrid;
+    [SerializeField] private GameConfig gameConfig;
+    [SerializeField] private GameGrid gameGrid;
+    [SerializeField] private float moveSpeed = 1.5f;
 
     private BlockConfig blockConfig;
-
-    public int currentColumn;
-    public int nextRow;
-
-    public int lowestRowPlacement;
-
-    private States currentState;
-
-    public float moveSpeed = 1.5f;
-    private float speedFactor = 1f;
-
-    private bool isDownKeyPressed;
-
+    private BlockState currentState;
     private GameRules gameRules;
+
+    private int[,] block;
+    private int currentColumn;
+    private int nextRow;
+    private int lowestRowPlacement;
+    private float speedFactor = 1f;
+    private bool isDownKeyPressed;
 
     private void Awake()
     {
         gameRules = new GameRules(gameGrid, gameConfig);
     }
 
+    private void Update()
+    {
+        if (MainManager.CurrentGameState != GameState.Running)
+            return;
+
+        if (currentState == BlockState.Move)
+        {
+            var targetPosition = gameGrid[nextRow, currentColumn].transform.position;
+
+            if (Vector3.SqrMagnitude(targetPosition - transform.position) < 0.01f)
+            {
+                nextRow += 1;
+
+                if (nextRow > lowestRowPlacement)
+                {
+                    StopBlockMovement();
+                }
+                targetPosition = gameGrid[nextRow, currentColumn].transform.position;
+            }
+            transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * moveSpeed * speedFactor);
+
+            if (isDownKeyPressed)
+            {
+                MainManager.Instance.AddScore(1);
+            }
+        }
+    }
+
+    private void OnEnable()
+    {
+        UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
+        UserInput.OnRotateEvent += OnRotateEvent;
+        UserInput.OnDownButtonPressed += OnDownButtonPressed;
+        SignalService.OnSpaceBarPressedEvent += OnBlockTeleportEvent;
+    }
+
+    private void OnDisable()
+    {
+        UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
+        UserInput.OnRotateEvent -= OnRotateEvent;
+        UserInput.OnDownButtonPressed -= OnDownButtonPressed;
+        SignalService.OnSpaceBarPressedEvent -= OnBlockTeleportEvent;
+    }
 
     public void InitialiseBlock(BlockConfig data)
     {
@@ -59,81 +95,19 @@ public class Block : MonoBehaviour
 
         nextRow = 0;
         currentColumn = 3;
-        currentState = States.Init;
+        currentState = BlockState.Init;
 
         Debug.Log(JsonConvert.SerializeObject(block));
-    }
-
-    public void RenderBlock()
-    {
-        RenderBlock(block);
-    }
-
-    private void Update()
-    {
-        if (MainManager.CurrentGameState != GameState.Running)
-            return;
-
-        if (currentState == States.Move)
-        {
-            var targetPosition = gameGrid[nextRow, currentColumn].transform.position;
-
-            if (Vector3.SqrMagnitude(targetPosition - transform.position) < 0.01f)
-            {
-                nextRow += 1;
-
-                if (nextRow > lowestRowPlacement)
-                {
-                    StopBlockMovement();
-                }
-                targetPosition = gameGrid[nextRow, currentColumn].transform.position;
-            }
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * moveSpeed * speedFactor);
-
-            if (isDownKeyPressed)
-            {
-                MainManager.instance.AddScore(1);
-            }
-        }
-    }
-
-    private void OnEnable()
-    {
-        UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
-        UserInput.OnRotateEvent += OnRotateEvent;
-        UserInput.OnDownButtonPressed += OnDownButtonPressed; ;
-        SignalService.OnSpaceBarPressedEvent += OnBlockTeleportEvent;
-    }
-
-    private void OnDisable()
-    {
-        UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
-        UserInput.OnRotateEvent -= OnRotateEvent;
-
-        SignalService.OnSpaceBarPressedEvent -= OnBlockTeleportEvent;
-    }
-
-    private void OnDirectionChangeEvent(int direction)
-    {
-        if (currentState == States.Move)
-        {
-            var isMoveValid = gameRules.IsValidMove(nextRow, currentColumn, direction, block);
-            if (isMoveValid)
-            {
-                currentColumn += direction;
-                AdjustBoundPositions();
-            }
-        }
     }
 
     public void AdjustBoundPositions()
     {
         if (currentColumn < 0)
             currentColumn = 0;
-        else if (currentColumn > gameGrid.columns - block.GetLength(1))
-            currentColumn = gameGrid.columns - block.GetLength(1);
+        else if (currentColumn > gameConfig.GridColumns - block.GetLength(1))
+            currentColumn = gameConfig.GridColumns - block.GetLength(1);
 
-        if (currentState != States.Move)
+        if (currentState != BlockState.Move)
         {
             transform.position = gameGrid[0, currentColumn].transform.position + Vector3.up;
         }
@@ -145,7 +119,12 @@ public class Block : MonoBehaviour
         }
 
         PredictLowestPlacement();
-        currentState = States.Move;
+        currentState = BlockState.Move;
+    }
+
+    public void RenderBlock()
+    {
+        RenderBlock(block);
     }
 
     public void Clear()
@@ -159,39 +138,28 @@ public class Block : MonoBehaviour
         renderedBlocks = null;
     }
 
-    private void OnBlockTeleportEvent()
+    #region Event Listeners
+
+    private void OnDirectionChangeEvent(int direction)
     {
-        if (MainManager.CurrentGameState != GameState.Running)
-            return;
-
-        if (currentState != States.Move)
-            return;
-
-        currentState = States.Evaluate;
-        PredictLowestPlacement();
-        StopBlockMovement();
-
-        MainManager.instance.AddScore((gameGrid.rows - lowestRowPlacement) * 35);
-    
-        if(MainManager.CurrentGameState == GameState.GameOver)
+        if (currentState == BlockState.Move)
         {
-            transform.position = gameGrid[nextRow, currentColumn].transform.position;
+            var isMoveValid = gameRules.IsValidMove(nextRow, currentColumn, direction, block);
+            if (isMoveValid)
+            {
+                currentColumn += direction;
+                AdjustBoundPositions();
+            }
         }
-    }
-
-    private void OnDownButtonPressed(bool isPressed)
-    {
-        isDownKeyPressed = isPressed;
-        speedFactor = isPressed ? gameConfig.BlockMoveDownFactor : 1f;
     }
 
     private void OnRotateEvent()
     {
-        if (currentState == States.Move)
+        if (currentState == BlockState.Move)
         {
             var rotatedBlock = gameRules.Rotate(block.GetLength(0), block.GetLength(1), block);
             var isValidRotation = gameRules.IsValidRotation(nextRow, currentColumn, rotatedBlock);
-            
+
             if (isValidRotation)
             {
                 block = rotatedBlock;
@@ -201,11 +169,38 @@ public class Block : MonoBehaviour
         }
     }
 
+    private void OnDownButtonPressed(bool isPressed)
+    {
+        isDownKeyPressed = isPressed;
+        speedFactor = isPressed ? gameConfig.BlockMoveDownFactor : 1f;
+    }
+
+    private void OnBlockTeleportEvent()
+    {
+        if (MainManager.CurrentGameState != GameState.Running)
+            return;
+
+        if (currentState != BlockState.Move)
+            return;
+
+        currentState = BlockState.Evaluate;
+        PredictLowestPlacement();
+        StopBlockMovement();
+
+        MainManager.Instance.AddScore((gameConfig.GridRows - lowestRowPlacement) * 35);
+
+        if (MainManager.CurrentGameState == GameState.GameOver)
+        {
+            transform.position = gameGrid[nextRow, currentColumn].transform.position;
+        }
+    }
+
+    #endregion Event Listeners
+
     private void StopBlockMovement()
     {
-        currentState = States.Placed;
+        currentState = BlockState.Placed;
         nextRow = lowestRowPlacement;
-        //transform.position = grid[initRowId, startColumnId].transform.position;
 
         var isSuccess = TryRenderBlocksInGrid();
 
@@ -215,7 +210,7 @@ public class Block : MonoBehaviour
         }
         else
         {
-            MainManager.instance.SetGameState(GameState.GameOver);
+            MainManager.Instance.SetGameState(GameState.GameOver);
         }
 
         StartCoroutine(gameGrid.ValidateGrid(() =>

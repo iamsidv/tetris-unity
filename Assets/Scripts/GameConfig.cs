@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "GameConfig.asset", menuName = "Cosmic Lounge/Create/Game Config")]
@@ -29,7 +27,7 @@ public class BlockConfig
     /*
     1 1 0
     0 1 1
-    The above block will be stored as 1,1,1,0,0,1,1 in data array. 
+    The above block will be stored as 1,1,1,0,0,1,1 in data array.
     The value can come from backend also.
     row = 2
     column = 3

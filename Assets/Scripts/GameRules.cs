@@ -26,7 +26,7 @@ public class GameRules
         if (newColumn < 0)
             return false;
 
-        if (lastColumnItem >= grid.columns)
+        if (lastColumnItem >= config.GridColumns)
             return false;
 
         if (grid[row, firstColumnItem].cellState != 0)
@@ -101,6 +101,9 @@ public class GameRules
             {
                 if (block[i, j] == 0)
                     continue;
+
+                if (currentColumn + j >= config.GridColumns)
+                    return false;
 
                 if (grid[currentRow + i, currentColumn + j].cellState != 0)
                     return false;
