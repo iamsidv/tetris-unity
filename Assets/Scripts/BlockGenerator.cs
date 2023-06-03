@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class BlockGenerator : MonoBehaviour
@@ -47,6 +48,8 @@ public class BlockGenerator : MonoBehaviour
         block.InitialiseBlock(blockData);
         block.RenderBlock();
         block.AdjustBoundPositions();
+        block.SetMoveState();
+
     }
 
     private void ClearOldBlock()

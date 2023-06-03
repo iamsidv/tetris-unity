@@ -24,6 +24,7 @@ public class Block : MonoBehaviour
 
     private int[,] block;
     private int currentColumn;
+    private int currentRow;
     private int nextRow;
     private int lowestRowPlacement;
     private float speedFactor = 1f;
@@ -43,10 +44,16 @@ public class Block : MonoBehaviour
         {
             var targetPosition = gameGrid[nextRow, currentColumn].transform.position;
 
-            if (Vector3.SqrMagnitude(targetPosition - transform.position) < 0.01f)
+            var distanceRemaining = Vector3.SqrMagnitude(targetPosition - transform.position);
+
+            if (distanceRemaining < 0.76f)
+            {
+                currentRow = nextRow;
+            }
+
+            if (distanceRemaining < 0.01f)
             {
                 nextRow += 1;
-
                 if (nextRow > lowestRowPlacement)
                 {
                     StopBlockMovement();
@@ -93,6 +100,7 @@ public class Block : MonoBehaviour
             }
         }
 
+        currentRow = 0;
         nextRow = 0;
         currentColumn = 3;
         currentState = BlockState.Init;
@@ -119,7 +127,18 @@ public class Block : MonoBehaviour
         }
 
         PredictLowestPlacement();
-        currentState = BlockState.Move;
+    }
+
+    public void SetMoveState()
+    {
+        if (lowestRowPlacement < 0)
+        {
+            StopBlockMovement();
+        }
+        else
+        {
+            currentState = BlockState.Move;
+        }
     }
 
     public void RenderBlock()
@@ -145,7 +164,7 @@ public class Block : MonoBehaviour
         var direction = signal.Value;
         if (currentState == BlockState.Move)
         {
-            var isMoveValid = gameRules.IsValidMove(nextRow, currentColumn, direction, block);
+            var isMoveValid = gameRules.IsValidMove(currentRow, currentColumn, direction, block);
             if (isMoveValid)
             {
                 currentColumn += direction;
@@ -159,7 +178,7 @@ public class Block : MonoBehaviour
         if (currentState == BlockState.Move)
         {
             var rotatedBlock = gameRules.Rotate(block.GetLength(0), block.GetLength(1), block);
-            var isValidRotation = gameRules.IsValidRotation(nextRow, currentColumn, rotatedBlock);
+            var isValidRotation = gameRules.IsValidRotation(currentRow, currentColumn, rotatedBlock);
 
             if (isValidRotation)
             {
@@ -259,7 +278,7 @@ public class Block : MonoBehaviour
         if (rowOffset < 0)
             return false;
 
-        if (lowestRowPlacement < 1)
+        if (lowestRowPlacement < 0)
             return false;
 
         gameGrid.DrawBlocksOnGrid(rowOffset, currentColumn, block, blockConfig.BlockSprite);

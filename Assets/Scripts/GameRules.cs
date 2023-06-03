@@ -51,7 +51,7 @@ public class GameRules
             }
 
             var blockColumnId = i + columnId;
-            var highestPlacement = 0;
+            var highestPlacement = -1;
             for (int j = rowId; j < config.GridRows; j++)
             {
                 if (grid[j, blockColumnId].cellState != 0)
