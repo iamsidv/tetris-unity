@@ -1,10 +1,9 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class MenuManager : MonoBehaviour
 {
-    public List<BaseView> views;
+    [SerializeField] private List<BaseView> views;
 
     private static MenuManager _instance;
 
@@ -23,7 +22,7 @@ public class MenuManager : MonoBehaviour
         var menu = _instance.views.Find(t => t.GetType().Equals(type));
         menu.SetVisibility(true);
         menu.OnScreenEnter();
-        
+
         return menu as T;
     }
 

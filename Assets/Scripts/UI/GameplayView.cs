@@ -18,7 +18,7 @@ public class GameplayView : BaseView
         SignalService.OnScoreUpdated -= DisplayScore;
     }
 
-    internal void DisplayScore(int currentScore)
+    public void DisplayScore(int currentScore)
     {
         scoreLabel.text = $"Score :{currentScore}";
     }
