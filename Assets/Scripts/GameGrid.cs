@@ -97,10 +97,11 @@ public class GameGrid : MonoBehaviour
         {
             if (IsRowFilled(i))
             {
+                yield return new WaitForSeconds(0.5f);
                 ClearRow(i);
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(0.35f);
                 MoveDownRowsTogether(i - 1);
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(0.25f);
                 i++;
             }
         }
