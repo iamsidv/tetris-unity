@@ -6,18 +6,18 @@ using UnityEngine;
 
 public class GameGrid : MonoBehaviour
 {
-    [SerializeField] private int rows = 12;
-    [SerializeField] private int columns = 8;
     [SerializeField] private GameConfig config;
     [SerializeField] private Cell cellPrefab;
 
-    public Cell this[int row, int column] => grid[row, column];
-
     private Cell[,] grid;
+    
+    public Cell this[int row, int column] => grid[row, column];
+    private int Rows => config.GridRows;
+    private int Columns => config.GridColumns;
 
     private void Awake()
     {
-        grid = new Cell[rows, columns];
+        grid = new Cell[Rows, Columns];
         Initialize();
     }
 
@@ -39,9 +39,9 @@ public class GameGrid : MonoBehaviour
 
     private void Initialize()
     {
-        for (int i = 0; i < rows; i++)
+        for (int i = 0; i < Rows; i++)
         {
-            for (int j = 0; j < columns; j++)
+            for (int j = 0; j < Columns; j++)
             {
                 var cell = Instantiate(cellPrefab, this.transform);
                 cell.transform.localPosition = new Vector3(j, -i, 0);
@@ -50,7 +50,7 @@ public class GameGrid : MonoBehaviour
                 grid[i, j] = cell;
 
                 //Test Code
-                if (i == rows - 1 && UnityEngine.Random.value > 0.5f)
+                if (i == Rows - 1 && UnityEngine.Random.value > 0.5f)
                 {
                     cell.Fill();
                     cell.SetSprite(config.SpriteMaps[UnityEngine.Random.Range(0, 5)].MappedSprite);
@@ -79,7 +79,7 @@ public class GameGrid : MonoBehaviour
     public IEnumerator ValidateGrid(Action callback = null)
     {
         var linesFilled = 0;
-        for (int i = 0; i < rows; i++)
+        for (int i = 0; i < Rows; i++)
         {
             if (IsRowFilled(i))
             {
@@ -93,7 +93,7 @@ public class GameGrid : MonoBehaviour
             SignalService.Publish(new UpdateScoreSignal { Value = score });
         }
 
-        for (int i = rows - 1; i >= 0; i--)
+        for (int i = Rows - 1; i >= 0; i--)
         {
             if (IsRowFilled(i))
             {
@@ -114,7 +114,7 @@ public class GameGrid : MonoBehaviour
     {
         var emptySprite = config.SpriteMaps.First(t => t.MappedId.Equals("outline")).MappedSprite;
 
-        for (int i = 0; i < columns; i++)
+        for (int i = 0; i < Columns; i++)
         {
             grid[row, i].ClearCell();
             grid[row, i].SetSprite(emptySprite);
@@ -127,7 +127,7 @@ public class GameGrid : MonoBehaviour
             return;
 
         var emptySprite = config.SpriteMaps.First(t => t.MappedId.Equals("outline")).MappedSprite;
-        for (int i = 0; i < columns; i++)
+        for (int i = 0; i < Columns; i++)
         {
             var currentSprite = grid[row, i].GetSprite;
             var cellState = grid[row, i].cellState;
@@ -149,7 +149,7 @@ public class GameGrid : MonoBehaviour
 
     public void ClearAllCells()
     {
-        for (int i = 0; i < rows; i++)
+        for (int i = 0; i < Rows; i++)
         {
             ClearRow(i);
         }
@@ -157,7 +157,7 @@ public class GameGrid : MonoBehaviour
 
     private bool IsRowFilled(int row)
     {
-        for (int i = 0; i < columns; i++)
+        for (int i = 0; i < Columns; i++)
         {
             if (grid[row, i].cellState == 0)
                 return false;
