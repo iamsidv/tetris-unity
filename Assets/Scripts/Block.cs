@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using UnityEngine;
 
 public class Block : MonoBehaviour
@@ -104,8 +103,6 @@ public class Block : MonoBehaviour
         nextRow = 0;
         currentColumn = 3;
         currentState = BlockState.Init;
-
-        Debug.Log(JsonConvert.SerializeObject(block));
     }
 
     public void AdjustBoundPositions()

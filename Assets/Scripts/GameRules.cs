@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class GameRules
 {
     private GameGrid grid;
@@ -66,13 +64,9 @@ public class GameRules
                 highestPlacement = j + emptyCellInColumn;
             }
 
-            Debug.Log(highestPlacement + " Empty cell " + emptyCellInColumn);
-
             if (highestPlacement < lowestRowPlacement)
                 lowestRowPlacement = highestPlacement;
         }
-
-        Debug.Log("Lowest Placement is at Row" + lowestRowPlacement);
 
         return lowestRowPlacement;
     }

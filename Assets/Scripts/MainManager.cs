@@ -43,9 +43,11 @@ public class MainManager : MonoBehaviour
             case GameState.Ready:
                 SetGameReadyState();
                 break;
+
             case GameState.Running:
                 StartGame();
                 break;
+
             case GameState.GameOver:
                 ShowGameOverScreen();
                 break;

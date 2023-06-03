@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Linq;
@@ -10,7 +9,7 @@ public class GameGrid : MonoBehaviour
     [SerializeField] private Cell cellPrefab;
 
     private Cell[,] grid;
-    
+
     public Cell this[int row, int column] => grid[row, column];
     private int Rows => config.GridRows;
     private int Columns => config.GridColumns;
@@ -61,8 +60,6 @@ public class GameGrid : MonoBehaviour
 
     public void DrawBlocksOnGrid(int rowOffset, int column, int[,] arr, Sprite sprite)
     {
-        Debug.Log(JsonConvert.SerializeObject(arr) + " offset " + rowOffset + " col " + column);
-
         for (int i = 0; i < arr.GetLength(0); i++)
         {
             for (int j = 0; j < arr.GetLength(1); j++)
