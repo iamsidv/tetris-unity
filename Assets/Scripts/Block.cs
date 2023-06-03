@@ -15,48 +15,58 @@ public class Block : MonoBehaviour
     [SerializeField] private SpriteRenderer blockElement;
     [SerializeField] private SpriteRenderer[] renderedBlocks;
 
-    private int[,] arr;
+    private int[,] block;
 
-    public GameConfig config;
-    public GameGrid grid;
+    public GameConfig gameConfig;
+    public GameGrid gameGrid;
 
-    private BlockConfig _data;
+    private BlockConfig blockConfig;
 
-    public int startColumnId;
+    public int currentColumn;
+    public int nextRow;
+
     public int lowestRowPlacement;
 
-    public int initRowId;
     private States currentState;
+
     public float moveSpeed = 1.5f;
     private float speedFactor = 1f;
 
     private bool isDownKeyPressed;
 
+    private GameRules gameRules;
+
+    private void Awake()
+    {
+        gameRules = new GameRules(gameGrid, gameConfig);
+    }
+
+
     public void InitialiseBlock(BlockConfig data)
     {
-        _data = data;
+        blockConfig = data;
 
-        arr = new int[_data.Row, _data.Column];
+        block = new int[blockConfig.Row, blockConfig.Column];
         var curPtr = 0;
 
-        for (int i = 0; i < _data.Row; i++)
+        for (int i = 0; i < blockConfig.Row; i++)
         {
-            for (int j = 0; j < _data.Column; j++)
+            for (int j = 0; j < blockConfig.Column; j++)
             {
-                arr[i, j] = _data.Indexes[curPtr++];
+                block[i, j] = blockConfig.Indexes[curPtr++];
             }
         }
 
-        initRowId = 0;
-        startColumnId = 3;
+        nextRow = 0;
+        currentColumn = 3;
         currentState = States.Init;
 
-        Debug.Log(JsonConvert.SerializeObject(arr));
+        Debug.Log(JsonConvert.SerializeObject(block));
     }
 
     public void RenderBlock()
     {
-        RenderBlock(arr);
+        RenderBlock(block);
     }
 
     private void Update()
@@ -66,17 +76,17 @@ public class Block : MonoBehaviour
 
         if (currentState == States.Move)
         {
-            var targetPosition = grid[initRowId, startColumnId].transform.position;
+            var targetPosition = gameGrid[nextRow, currentColumn].transform.position;
 
             if (Vector3.SqrMagnitude(targetPosition - transform.position) < 0.01f)
             {
-                initRowId += 1;
+                nextRow += 1;
 
-                if (initRowId > lowestRowPlacement)
+                if (nextRow > lowestRowPlacement)
                 {
                     StopBlockMovement();
                 }
-                targetPosition = grid[initRowId, startColumnId].transform.position;
+                targetPosition = gameGrid[nextRow, currentColumn].transform.position;
             }
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * moveSpeed * speedFactor);
 
@@ -107,10 +117,10 @@ public class Block : MonoBehaviour
     {
         if (currentState == States.Move)
         {
-            var isMoveValid = IsValidMove(direction);
+            var isMoveValid = gameRules.IsValidMove(nextRow, currentColumn, direction, block);
             if (isMoveValid)
             {
-                startColumnId += direction;
+                currentColumn += direction;
                 AdjustBoundPositions();
             }
         }
@@ -118,19 +128,19 @@ public class Block : MonoBehaviour
 
     public void AdjustBoundPositions()
     {
-        if (startColumnId < 0)
-            startColumnId = 0;
-        else if (startColumnId > grid.columns - arr.GetLength(1))
-            startColumnId = grid.columns - arr.GetLength(1);
+        if (currentColumn < 0)
+            currentColumn = 0;
+        else if (currentColumn > gameGrid.columns - block.GetLength(1))
+            currentColumn = gameGrid.columns - block.GetLength(1);
 
         if (currentState != States.Move)
         {
-            transform.position = grid[0, startColumnId].transform.position + Vector3.up;
+            transform.position = gameGrid[0, currentColumn].transform.position + Vector3.up;
         }
         else
         {
             var currPos = transform.position;
-            currPos.x = grid[initRowId, startColumnId].transform.position.x;
+            currPos.x = gameGrid[nextRow, currentColumn].transform.position.x;
             transform.position = currPos;
         }
 
@@ -144,8 +154,8 @@ public class Block : MonoBehaviour
         {
             Destroy(blockItem.gameObject);
         }
-        _data = null;
-        arr = null;
+        blockConfig = null;
+        block = null;
         renderedBlocks = null;
     }
 
@@ -161,30 +171,40 @@ public class Block : MonoBehaviour
         PredictLowestPlacement();
         StopBlockMovement();
 
-        MainManager.instance.AddScore((grid.rows - lowestRowPlacement) * 35);
+        MainManager.instance.AddScore((gameGrid.rows - lowestRowPlacement) * 35);
+    
+        if(MainManager.CurrentGameState == GameState.GameOver)
+        {
+            transform.position = gameGrid[nextRow, currentColumn].transform.position;
+        }
     }
 
     private void OnDownButtonPressed(bool isPressed)
     {
         isDownKeyPressed = isPressed;
-        speedFactor = isPressed ? config.BlockMoveDownFactor : 1f;
+        speedFactor = isPressed ? gameConfig.BlockMoveDownFactor : 1f;
     }
 
     private void OnRotateEvent()
     {
         if (currentState == States.Move)
         {
-            arr = Rotate(arr.GetLength(0), arr.GetLength(1), arr);
-            RenderBlock(arr);
-
-            AdjustBoundPositions();
+            var rotatedBlock = gameRules.Rotate(block.GetLength(0), block.GetLength(1), block);
+            var isValidRotation = gameRules.IsValidRotation(nextRow, currentColumn, rotatedBlock);
+            
+            if (isValidRotation)
+            {
+                block = rotatedBlock;
+                RenderBlock(block);
+                AdjustBoundPositions();
+            }
         }
     }
 
     private void StopBlockMovement()
     {
         currentState = States.Placed;
-        initRowId = lowestRowPlacement;
+        nextRow = lowestRowPlacement;
         //transform.position = grid[initRowId, startColumnId].transform.position;
 
         var isSuccess = TryRenderBlocksInGrid();
@@ -198,64 +218,15 @@ public class Block : MonoBehaviour
             MainManager.instance.SetGameState(GameState.GameOver);
         }
 
-        StartCoroutine(grid.ValidateGrid(() =>
+        StartCoroutine(gameGrid.ValidateGrid(() =>
         {
             SignalService.TriggerOnBlockPlacedEvent();
         }));
     }
 
-    private int[,] Rotate(int row, int column, int[,] arr)
-    {
-        var newRow = column;
-        var newColumn = row;
-
-        int[,] newArr = new int[newRow, newColumn];
-
-        for (int j = 0; j < newColumn; j++)
-        {
-            for (int i = 0; i < newRow; i++)
-            {
-                var bb = arr[row - j - 1, i];
-                newArr[i, j] = bb;
-            }
-        }
-
-        return newArr;
-    }
-
     private void PredictLowestPlacement()
     {
-        lowestRowPlacement = config.GridRows - 1;
-        for (int i = 0; i < arr.GetLength(1); i++)
-        {
-            var lastRow = arr.GetLength(0) - 1;
-            var emptyCellInColumn = 0;
-            for (int e = lastRow; e >= 0; e--)
-            {
-                if (arr[e, i] != 0)
-                    break;
-                emptyCellInColumn += 1;
-            }
-
-            var blockColumnId = i + startColumnId;
-            var highestPlacement = 0;
-            for (int j = initRowId; j < config.GridRows; j++)
-            {
-                if (grid[j, blockColumnId].cellState != 0)
-                {
-                    break;
-                }
-                highestPlacement = j + emptyCellInColumn;
-            }
-
-            Debug.Log(highestPlacement + " Empty cell " + emptyCellInColumn);
-
-            if (highestPlacement < lowestRowPlacement)
-                lowestRowPlacement = highestPlacement;
-        }
-
-        Debug.Log("Lowest Placement is at Row" + lowestRowPlacement);
-        //grid.DrawBlocksOnGrid(lowestPlacement, startColumnId, arr, _data.BlockSprite);
+        lowestRowPlacement = gameRules.FindLowestPlacement(block, currentColumn, nextRow);
     }
 
     private void RenderBlock(int[,] arr)
@@ -280,14 +251,14 @@ public class Block : MonoBehaviour
                 var go = renderedBlocks[i + (j * arr.GetLength(0))];
                 go.transform.localPosition = new Vector3(j, -i, 0) + Vector3.up * (arr.GetLength(0) - 1);
                 go.gameObject.SetActive(arr[i, j] > 0);
-                go.sprite = _data.BlockSprite;
+                go.sprite = blockConfig.BlockSprite;
             }
         }
     }
 
     private bool TryRenderBlocksInGrid()
     {
-        var rowOffset = lowestRowPlacement - arr.GetLength(0) + 1;
+        var rowOffset = lowestRowPlacement - block.GetLength(0) + 1;
 
         if (rowOffset < 0)
             return false;
@@ -295,33 +266,8 @@ public class Block : MonoBehaviour
         if (lowestRowPlacement < 1)
             return false;
 
-        grid.DrawBlocksOnGrid(rowOffset, startColumnId, arr, _data.BlockSprite);
+        gameGrid.DrawBlocksOnGrid(rowOffset, currentColumn, block, blockConfig.BlockSprite);
         return true;
-    }
-
-    private bool IsValidMove(int direction)
-    {
-        var newColumn = startColumnId + direction;
-
-        var totalColumns = arr.GetLength(1);
-        var isValid = true;
-
-        var firstColumnItem = newColumn;
-        var lastColumnItem = newColumn + totalColumns - 1;
-
-        if (newColumn < 0)
-            return false;
-
-        if (lastColumnItem >= grid.columns)
-            return false;
-
-        if (grid[initRowId, firstColumnItem].cellState != 0)
-            return false;
-
-        if (grid[initRowId, lastColumnItem].cellState != 0)
-            return false;
-
-        return isValid;
     }
 
     private void SetBlocksVisibility(bool state)

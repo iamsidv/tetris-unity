@@ -233,11 +233,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blockElement: {fileID: 694955284}
   renderedBlocks: []
-  config: {fileID: 11400000, guid: 63313563e5ae2f946bb57e31319e3826, type: 2}
-  grid: {fileID: 1358786934}
-  startColumnId: 3
+  gameConfig: {fileID: 11400000, guid: 63313563e5ae2f946bb57e31319e3826, type: 2}
+  gameGrid: {fileID: 1358786934}
+  currentColumn: 0
+  nextRow: 0
   lowestRowPlacement: 0
-  initRowId: 0
   moveSpeed: 2
 --- !u!4 &88820452
 Transform:
