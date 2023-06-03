@@ -1,11 +1,9 @@
 using Newtonsoft.Json;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Block : MonoBehaviour
 {
-    enum States
+    private enum States
     {
         Init,
         Ready,
@@ -13,7 +11,6 @@ public class Block : MonoBehaviour
         Placed,
         Evaluate
     }
-
 
     [SerializeField] private SpriteRenderer blockElement;
     [SerializeField] private SpriteRenderer[] renderedBlocks;
@@ -51,6 +48,7 @@ public class Block : MonoBehaviour
         }
 
         initRowId = 0;
+        startColumnId = 3;
         currentState = States.Init;
 
         Debug.Log(JsonConvert.SerializeObject(arr));
@@ -127,7 +125,7 @@ public class Block : MonoBehaviour
 
         if (currentState != States.Move)
         {
-            transform.position = grid[initRowId, startColumnId].transform.position;
+            transform.position = grid[0, startColumnId].transform.position + Vector3.up;
         }
         else
         {
@@ -189,9 +187,16 @@ public class Block : MonoBehaviour
         initRowId = lowestRowPlacement;
         //transform.position = grid[initRowId, startColumnId].transform.position;
 
-        DrawBlocksOnGrid();
+        var isSuccess = TryRenderBlocksInGrid();
 
-        SetBlocksVisibility(false);
+        if (isSuccess)
+        {
+            SetBlocksVisibility(false);
+        }
+        else
+        {
+            MainManager.instance.SetGameState(GameState.GameOver);
+        }
 
         StartCoroutine(grid.ValidateGrid(() =>
         {
@@ -280,15 +285,18 @@ public class Block : MonoBehaviour
         }
     }
 
-    private void DrawBlocksOnGrid()
+    private bool TryRenderBlocksInGrid()
     {
-        if(lowestRowPlacement == 0)
-        {
-            MainManager.instance.SetGameState(GameState.GameOver);
-            return;
-        }
+        var rowOffset = lowestRowPlacement - arr.GetLength(0) + 1;
 
-        grid.DrawBlocksOnGrid(lowestRowPlacement, startColumnId, arr, _data.BlockSprite);
+        if (rowOffset < 0)
+            return false;
+
+        if (lowestRowPlacement < 1)
+            return false;
+
+        grid.DrawBlocksOnGrid(rowOffset, startColumnId, arr, _data.BlockSprite);
+        return true;
     }
 
     private bool IsValidMove(int direction)

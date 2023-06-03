@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class MainMenuView : BaseView
 {
     public override void OnScreenEnter()
@@ -13,7 +9,6 @@ public class MainMenuView : BaseView
 
     private void OnSpaceBarPressedEvent()
     {
-
         if (MainManager.CurrentGameState == GameState.Ready)
             MainManager.instance.StartGame();
     }

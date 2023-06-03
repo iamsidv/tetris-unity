@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class BlockGenerator : MonoBehaviour
@@ -39,8 +38,6 @@ public class BlockGenerator : MonoBehaviour
     //{
     //    Debug.Log($"_signalTest_ {obj.GetType().Name} received by {this.GetType().Name} with value {obj.Value}");
     //}
-
-
 
     private void DoAfterBlockPlacedInGrid()
     {

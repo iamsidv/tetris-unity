@@ -1,7 +1,6 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -13,7 +12,7 @@ public class GameGrid : MonoBehaviour
     private Cell[,] grid;
 
     [SerializeField] private GameConfig config;
-    [SerializeField] Cell cellPrefab;
+    [SerializeField] private Cell cellPrefab;
 
     public Cell this[int row, int column] => grid[row, column];
 
@@ -61,11 +60,11 @@ public class GameGrid : MonoBehaviour
         }
     }
 
-    public void DrawBlocksOnGrid(int rowPlacement, int column, int[,] arr, Sprite sprite)
+    public void DrawBlocksOnGrid(int rowOffset, int column, int[,] arr, Sprite sprite)
     {
-        var rowOffset = rowPlacement - arr.GetLength(0) + 1;
+        //var rowOffset = rowPlacement - arr.GetLength(0) + 1;
 
-        Debug.Log(JsonConvert.SerializeObject(arr) + " rP " + rowPlacement + " offset " + rowOffset + " col " + column);
+        Debug.Log(JsonConvert.SerializeObject(arr) + " offset " + rowOffset + " col " + column);
 
         for (int i = 0; i < arr.GetLength(0); i++)
         {
@@ -99,6 +98,7 @@ public class GameGrid : MonoBehaviour
             if (IsRowFilled(i))
             {
                 ClearRow(i);
+                yield return new WaitForSeconds(0.5f);
                 MoveDownRowsTogether(i - 1);
                 yield return new WaitForSeconds(0.5f);
                 i++;
@@ -109,7 +109,6 @@ public class GameGrid : MonoBehaviour
 
         callback?.Invoke();
     }
-
 
     private bool IsRowFilled(int row)
     {

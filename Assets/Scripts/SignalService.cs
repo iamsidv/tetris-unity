@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 
 public class SignalService
 {
-   
-
     public static event Action<int> OnScoreUpdated;
+
     public static event Action OnBlockPlacedEvent;
+
     public static event Action OnSpaceBarPressedEvent;
+
     public static event Action<GameState> OnGameStateUpdated;
 
     public static void TriggerOnBlockPlacedEvent()
@@ -54,7 +54,6 @@ public class SignalService
 
     //    //    if (Instance.receivers.ContainsKey(localType))
     //    //    {
-
     //    //             UnityEngine.Debug.Log("SignalService " + ((callback as System.Action<ISignal>)==null));
     //    //             UnityEngine.Debug.Log("SignalService " + (callback == null));
 
