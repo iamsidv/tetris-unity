@@ -10,7 +10,6 @@ public enum GameState
 
 public class MainManager : MonoBehaviour
 {
-    public static MainManager Instance { get; private set; }
     public static GameState CurrentGameState { get; private set; }
 
     [SerializeField] private GameState gameState;
@@ -18,44 +17,61 @@ public class MainManager : MonoBehaviour
 
     private int currentScore = 0;
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-    }
-
     private void Start()
     {
         SetGameReadyState();
     }
 
-    public void SetGameState(GameState state)
+    private void OnEnable()
     {
-        CurrentGameState = state;
-        gameState = state;
-        SignalService.TriggerUpdateGameState(state);
+        SignalService.Subscribe<UpdateScoreSignal>(AddScore);
+        SignalService.Subscribe<GameStateUpdateSignal>(SetGameState);
     }
 
-    private static void SetGameReadyState()
+    private void OnDisable()
     {
-        Instance.SetGameState(GameState.Ready);
+        SignalService.RemoveSignal<UpdateScoreSignal>(AddScore);
+        SignalService.RemoveSignal<GameStateUpdateSignal>(SetGameState);
+    }
+
+    public void SetGameState(GameStateUpdateSignal signal)
+    {
+        CurrentGameState = gameState = signal.Value;
+
+        switch (gameState)
+        {
+            case GameState.Ready:
+                SetGameReadyState();
+                break;
+            case GameState.Running:
+                StartGame();
+                break;
+            case GameState.GameOver:
+                ShowGameOverScreen();
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void SetGameReadyState()
+    {
         MenuManager.ShowMenu<MainMenuView>();
         MenuManager.HideMenu<GameplayView>();
+        gameState = CurrentGameState = GameState.Ready;
     }
 
-    public void StartGame()
+    private void StartGame()
     {
         currentScore = 0;
         MenuManager.HideMenu<MainMenuView>();
         var menu = MenuManager.ShowMenu<GameplayView>();
         menu.DisplayScore(currentScore);
         menu.SetTitle(string.Empty);
-        SetGameState(GameState.Running);
     }
 
-    public void ShowGameOverScreen()
+    private void ShowGameOverScreen()
     {
         MenuManager.HideMenu<MainMenuView>();
         var menu = MenuManager.ShowMenu<GameplayView>();
@@ -68,13 +84,12 @@ public class MainManager : MonoBehaviour
     private IEnumerator DelayedCall(float delay)
     {
         yield return new WaitForSeconds(delay);
-
         SetGameReadyState();
     }
 
-    public void AddScore(int score)
+    private void AddScore(UpdateScoreSignal signal)
     {
-        currentScore += score;
-        SignalService.TriggerUpdateScore(currentScore);
+        currentScore += signal.Value;
+        SignalService.Publish(new DisplayScoreSignal { Value = currentScore });
     }
 }

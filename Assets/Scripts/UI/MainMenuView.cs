@@ -3,20 +3,20 @@ public class MainMenuView : BaseView
     public override void OnScreenEnter()
     {
         base.OnScreenEnter();
-
-        SignalService.OnSpaceBarPressedEvent += OnSpaceBarPressedEvent;
+        SignalService.Subscribe<SpaceBarPressedSignal>(OnSpaceBarPressed);
     }
 
     public override void OnScreenExit()
     {
         base.OnScreenExit();
-
-        SignalService.OnSpaceBarPressedEvent -= OnSpaceBarPressedEvent;
+        SignalService.RemoveSignal<SpaceBarPressedSignal>(OnSpaceBarPressed);
     }
 
-    private void OnSpaceBarPressedEvent()
+    private void OnSpaceBarPressed(SpaceBarPressedSignal signal)
     {
         if (MainManager.CurrentGameState == GameState.Ready)
-            MainManager.Instance.StartGame();
+        {
+            SignalService.Publish(new GameStateUpdateSignal { Value = GameState.Running });
+        }
     }
 }

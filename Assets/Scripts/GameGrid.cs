@@ -23,18 +23,18 @@ public class GameGrid : MonoBehaviour
 
     private void OnEnable()
     {
-        SignalService.OnGameStateUpdated += OnGameStateUpdate;
+        SignalService.Subscribe<GameStateUpdateSignal>(OnGameStateUpdate);
     }
 
-    private void OnGameStateUpdate(GameState state)
+    private void OnGameStateUpdate(GameStateUpdateSignal signal)
     {
-        if (state == GameState.Running)
+        if (signal.Value == GameState.Running)
             ClearAllCells();
     }
 
     private void OnDisable()
     {
-        SignalService.OnGameStateUpdated -= OnGameStateUpdate;
+        SignalService.RemoveSignal<GameStateUpdateSignal>(OnGameStateUpdate);
     }
 
     private void Initialize()
@@ -88,7 +88,10 @@ public class GameGrid : MonoBehaviour
         }
 
         if (linesFilled > 0)
-            MainManager.Instance.AddScore(config.LineClearScore + (linesFilled - 1) * config.LineClearMultiplier);
+        {
+            var score = config.LineClearScore + (linesFilled - 1) * config.LineClearMultiplier;
+            SignalService.Publish(new UpdateScoreSignal { Value = score });
+        }
 
         for (int i = rows - 1; i >= 0; i--)
         {
@@ -106,8 +109,6 @@ public class GameGrid : MonoBehaviour
 
         callback?.Invoke();
     }
-
-    
 
     public void ClearRow(int row)
     {

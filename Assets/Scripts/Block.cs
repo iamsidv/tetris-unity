@@ -57,25 +57,25 @@ public class Block : MonoBehaviour
 
             if (isDownKeyPressed)
             {
-                MainManager.Instance.AddScore(1);
+                SignalService.Publish(new UpdateScoreSignal { Value = 1 });
             }
         }
     }
 
     private void OnEnable()
     {
-        UserInput.OnDirectionChangeEvent += OnDirectionChangeEvent;
-        UserInput.OnRotateEvent += OnRotateEvent;
-        UserInput.OnDownButtonPressed += OnDownButtonPressed;
-        SignalService.OnSpaceBarPressedEvent += OnBlockTeleportEvent;
+        SignalService.Subscribe<DirectionButtonPressedSignal>(OnDirectionChangeEvent);
+        SignalService.Subscribe<RotateBlockSignal>(OnRotateEvent);
+        SignalService.Subscribe<DownArrowPressedSignal>(OnDownButtonPressed);
+        SignalService.Subscribe<SpaceBarPressedSignal>(OnBlockTeleportEvent);
     }
 
     private void OnDisable()
     {
-        UserInput.OnDirectionChangeEvent -= OnDirectionChangeEvent;
-        UserInput.OnRotateEvent -= OnRotateEvent;
-        UserInput.OnDownButtonPressed -= OnDownButtonPressed;
-        SignalService.OnSpaceBarPressedEvent -= OnBlockTeleportEvent;
+        SignalService.RemoveSignal<DirectionButtonPressedSignal>(OnDirectionChangeEvent);
+        SignalService.RemoveSignal<RotateBlockSignal>(OnRotateEvent);
+        SignalService.RemoveSignal<DownArrowPressedSignal>(OnDownButtonPressed);
+        SignalService.RemoveSignal<SpaceBarPressedSignal>(OnBlockTeleportEvent);
     }
 
     public void InitialiseBlock(BlockConfig data)
@@ -140,8 +140,9 @@ public class Block : MonoBehaviour
 
     #region Event Listeners
 
-    private void OnDirectionChangeEvent(int direction)
+    private void OnDirectionChangeEvent(DirectionButtonPressedSignal signal)
     {
+        var direction = signal.Value;
         if (currentState == BlockState.Move)
         {
             var isMoveValid = gameRules.IsValidMove(nextRow, currentColumn, direction, block);
@@ -153,7 +154,7 @@ public class Block : MonoBehaviour
         }
     }
 
-    private void OnRotateEvent()
+    private void OnRotateEvent(RotateBlockSignal signal)
     {
         if (currentState == BlockState.Move)
         {
@@ -169,13 +170,13 @@ public class Block : MonoBehaviour
         }
     }
 
-    private void OnDownButtonPressed(bool isPressed)
+    private void OnDownButtonPressed(DownArrowPressedSignal signal)
     {
-        isDownKeyPressed = isPressed;
-        speedFactor = isPressed ? gameConfig.BlockMoveDownFactor : 1f;
+        isDownKeyPressed = signal.Value;
+        speedFactor = signal.Value ? gameConfig.BlockMoveDownFactor : 1f;
     }
 
-    private void OnBlockTeleportEvent()
+    private void OnBlockTeleportEvent(SpaceBarPressedSignal signal)
     {
         if (MainManager.CurrentGameState != GameState.Running)
             return;
@@ -187,7 +188,7 @@ public class Block : MonoBehaviour
         PredictLowestPlacement();
         StopBlockMovement();
 
-        MainManager.Instance.AddScore((gameConfig.GridRows - lowestRowPlacement) * 35);
+        SignalService.Publish(new UpdateScoreSignal { Value = (gameConfig.GridRows - lowestRowPlacement) * 35 });
 
         if (MainManager.CurrentGameState == GameState.GameOver)
         {
@@ -210,12 +211,12 @@ public class Block : MonoBehaviour
         }
         else
         {
-            MainManager.Instance.SetGameState(GameState.GameOver);
+            SignalService.Publish(new GameStateUpdateSignal { Value = GameState.GameOver });
         }
 
         StartCoroutine(gameGrid.ValidateGrid(() =>
         {
-            SignalService.TriggerOnBlockPlacedEvent();
+            SignalService.Publish<BlockPlacedSignal>();
         }));
     }
 

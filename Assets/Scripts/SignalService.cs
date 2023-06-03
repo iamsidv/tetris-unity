@@ -1,102 +1,68 @@
 ﻿using System;
+using System.Collections.Generic;
+
+public delegate void SignalCallback<T>(T signal);
 
 public class SignalService
 {
-    public static event Action<int> OnScoreUpdated;
+    private static SignalService _instance;
 
-    public static event Action OnBlockPlacedEvent;
-
-    public static event Action OnSpaceBarPressedEvent;
-
-    public static event Action<GameState> OnGameStateUpdated;
-
-    public static void TriggerOnBlockPlacedEvent()
+    private static SignalService Instance
     {
-        OnBlockPlacedEvent?.Invoke();
+        get
+        {
+            if (_instance == null)
+                _instance = new SignalService();
+
+            return _instance;
+        }
     }
 
-    public static void TriggerSpaceBarPressedEvent()
+    private readonly Dictionary<Type, List<Delegate>> observers = new Dictionary<Type, List<Delegate>>();
+
+    public static void Subscribe<T>(SignalCallback<T> callback) where T : Signal, new()
     {
-        OnSpaceBarPressedEvent?.Invoke();
+        var localType = typeof(T);
+
+        if (Instance.observers.ContainsKey(localType))
+        {
+            Instance.observers[localType].Add(callback);
+        }
+        else
+        {
+            Instance.observers.Add(localType, new List<Delegate> { callback });
+        }
     }
 
-    public static void TriggerUpdateGameState(GameState state)
+    public static void RemoveSignal<T>(SignalCallback<T> callback) where T : Signal, new()
     {
-        OnGameStateUpdated?.Invoke(state);
+        if (Instance.observers.ContainsKey(typeof(T)))
+        {
+            var temp = new List<Delegate>();
+            temp.AddRange(Instance.observers[typeof(T)]);
+
+            var toRemove = temp.FindAll(t => t.Target.Equals(callback.Target));
+            foreach (var item in toRemove)
+            {
+                temp.Remove(item);
+            }
+            Instance.observers[typeof(T)] = temp;
+        }
     }
 
-    public static void TriggerUpdateScore(int updatedScore)
+    public static void Publish<T>(T signalObject = null) where T : Signal, new()
     {
-        OnScoreUpdated?.Invoke(updatedScore);
+        if (signalObject == null)
+        {
+            signalObject = new T();
+        }
+
+        if (Instance.observers.TryGetValue(typeof(T), out var callbacks))
+        {
+            foreach (var item in callbacks)
+            {
+                item?.DynamicInvoke(signalObject);
+            }
+        }
     }
-
-    //    public Dictionary<System.Type, List<System.Action<ISignal>>> receivers = new Dictionary<System.Type, List<System.Action<ISignal>>>();
-    //    public Dictionary<System.Type, List<object>> observers = new Dictionary<System.Type, List<object>>();
-
-    //    private static SignalService _instance;
-
-    //    private static SignalService Instance
-    //    {
-    //        get
-    //        {
-    //            if (_instance == null)
-    //                _instance = new SignalService();
-
-    //            return _instance;
-    //        }
-    //    }
-
-    //    //public static void Subscribe<T>(System.Action<T> callback) where T : ISignal
-    //    //{
-    //    //    UnityEngine.Debug.Log("SignalService " + typeof(T));
-
-    //    //    var localType = callback.GetType();
-
-    //    //    if (Instance.receivers.ContainsKey(localType))
-    //    //    {
-    //    //             UnityEngine.Debug.Log("SignalService " + ((callback as System.Action<ISignal>)==null));
-    //    //             UnityEngine.Debug.Log("SignalService " + (callback == null));
-
-    //    //        Instance.receivers[localType].Add(callback as System.Action<ISignal>);
-    //    //    }
-    //    //    else
-    //    //    {
-    //    //        //Instance.receivers.Add(localType, new List<System.Action<Signal>> { callback });
-    //    //    }
-
-    //    //    UnityEngine.Debug.Log("SignalService " + Instance.receivers.Count);
-
-    //    //}
-
-    //    public void Subscribe<T>(System.Action<Signal<T>> callback)
-    //    {
-    //        var localtype = typeof(T);
-
-    //        if (Instance.observers.ContainsKey(localtype))
-    //        {
-    //            Instance.observers[localtype].Add(callback);
-    //        }
-    //        else
-    //        {
-    //            Instance.observers.Add(localtype, new List<object> { callback });
-    //        }
-    //    }
-
-    //    public static void Publish<T>(T signalObject = default) where T : ISignal
-    //    {
-    //        //if(signalObject== null)
-    //        //{
-    //        //    signalObject = new Si();
-    //        //}
-
-    //        var localType = signalObject.GetType();
-
-    //        if (Instance.receivers.TryGetValue(localType, out var callbacks))
-    //        {
-    //            foreach (var item in callbacks)
-    //            {
-    //                item?.Invoke(signalObject);
-    //            }
-    //        }
-    //    }
 }

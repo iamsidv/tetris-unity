@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Cell : MonoBehaviour
 {
@@ -7,7 +6,6 @@ public class Cell : MonoBehaviour
     private int columnId;
 
     public int cellState = 0;
-    //public int cellColor = 0;
 
     [SerializeField] private SpriteRenderer spriteRenderer;
     public Sprite GetSprite => spriteRenderer.sprite;

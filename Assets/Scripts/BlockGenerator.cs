@@ -7,33 +7,22 @@ public class BlockGenerator : MonoBehaviour
 
     private void OnEnable()
     {
-        SignalService.OnBlockPlacedEvent += DoAfterBlockPlacedInGrid;
-        SignalService.OnGameStateUpdated += OnGameStateUpdate;
+        SignalService.Subscribe<BlockPlacedSignal>(DoAfterBlockPlacedInGrid);
+        SignalService.Subscribe<GameStateUpdateSignal>(OnGameStateUpdate);
     }
 
     private void OnDisable()
     {
-        SignalService.OnBlockPlacedEvent -= DoAfterBlockPlacedInGrid;
-        SignalService.OnGameStateUpdated -= OnGameStateUpdate;
+        SignalService.RemoveSignal<BlockPlacedSignal>(DoAfterBlockPlacedInGrid);
+        SignalService.RemoveSignal<GameStateUpdateSignal>(OnGameStateUpdate);
     }
-
-    //private void OnTestSignal(TestSignal obj)
-    //{
-    //    Debug.Log($"_signalTest_ {obj.GetType().Name} received by {this.GetType().Name} with value {obj.Value}");
-    //}
-
-    //private void OnButtonPressed(ButtonPressedSignal obj)
-    //{
-    //    Debug.Log($"_signalTest_ {obj.GetType().Name} received by {this.GetType().Name} with value {obj.Value}");
-    //}
 
     #region Event Listeners
 
-    private void DoAfterBlockPlacedInGrid()
+    private void DoAfterBlockPlacedInGrid(BlockPlacedSignal signal)
     {
         if (MainManager.CurrentGameState == GameState.GameOver)
         {
-            MainManager.Instance.ShowGameOverScreen();
             return;
         }
 
@@ -41,9 +30,9 @@ public class BlockGenerator : MonoBehaviour
         CreateNewBlock();
     }
 
-    private void OnGameStateUpdate(GameState state)
+    private void OnGameStateUpdate(GameStateUpdateSignal signal)
     {
-        if (state == GameState.Running)
+        if (signal.Value == GameState.Running)
         {
             ClearOldBlock();
             CreateNewBlock();

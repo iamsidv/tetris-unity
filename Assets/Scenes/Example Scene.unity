@@ -235,9 +235,6 @@ MonoBehaviour:
   renderedBlocks: []
   gameConfig: {fileID: 11400000, guid: 63313563e5ae2f946bb57e31319e3826, type: 2}
   gameGrid: {fileID: 1358786934}
-  currentColumn: 0
-  nextRow: 0
-  lowestRowPlacement: 0
   moveSpeed: 2
 --- !u!4 &88820452
 Transform:
@@ -529,7 +526,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7953c0e667071224aa4779fa3e67f1d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentScore: 0
   gameState: 0
   newGameStartDelay: 2
 --- !u!4 &791841869

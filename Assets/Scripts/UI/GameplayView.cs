@@ -8,14 +8,14 @@ public class GameplayView : BaseView
     public override void OnScreenEnter()
     {
         base.OnScreenEnter();
-        SignalService.OnScoreUpdated += DisplayScore;
+        SignalService.Subscribe<DisplayScoreSignal>(OnScoreUpdated);
     }
 
     public override void OnScreenExit()
     {
         base.OnScreenExit();
 
-        SignalService.OnScoreUpdated -= DisplayScore;
+        SignalService.RemoveSignal<DisplayScoreSignal>(OnScoreUpdated);
     }
 
     public void DisplayScore(int currentScore)
@@ -27,4 +27,6 @@ public class GameplayView : BaseView
     {
         titleLabel.text = title;
     }
+
+    private void OnScoreUpdated(DisplayScoreSignal signal) => DisplayScore(signal.Value);
 }
