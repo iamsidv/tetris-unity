@@ -709,8 +709,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b9fcb89b157afc4bb5c5c2c994cfc8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 12
-  columns: 8
   config: {fileID: 11400000, guid: 63313563e5ae2f946bb57e31319e3826, type: 2}
   cellPrefab: {fileID: 8477610080948170826, guid: 11bfea5970d4b484aaeec940401e3795, type: 3}
 --- !u!1 &1493037756
