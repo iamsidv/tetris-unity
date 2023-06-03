@@ -46,7 +46,7 @@ public class Block : MonoBehaviour
 
             var distanceRemaining = Vector3.SqrMagnitude(targetPosition - transform.position);
 
-            if (distanceRemaining < 0.76f)
+            if (distanceRemaining < 0.86f)
             {
                 currentRow = nextRow;
             }

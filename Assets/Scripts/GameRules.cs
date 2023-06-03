@@ -18,7 +18,6 @@ public class GameRules
         var totalColumns = block.GetLength(1);
         var isValid = true;
 
-        var firstColumnItem = newColumn;
         var lastColumnItem = newColumn + totalColumns - 1;
 
         if (newColumn < 0)
@@ -27,11 +26,17 @@ public class GameRules
         if (lastColumnItem >= config.GridColumns)
             return false;
 
-        if (grid[row, firstColumnItem].cellState != 0)
-            return false;
+        for (int i = 0; i < block.GetLength(0); i++)
+        {
+            for (int j = 0; j < block.GetLength(1); j++)
+            {
+                if (i + row - 1 < 0)
+                    continue;
 
-        if (grid[row, lastColumnItem].cellState != 0)
-            return false;
+                if (grid[i + row - 1, j + newColumn].cellState != 0)
+                    return false;
+            }
+        }
 
         return isValid;
     }
